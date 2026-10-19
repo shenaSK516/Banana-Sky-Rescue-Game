@@ -1,0 +1,27 @@
+# Java
+*.class
+target/
+build/
+.gradle/
+
+# JavaScript
+node_modules/
+dist/
+coverage/
+
+# IDE
+.vscode/
+.idea/
+
+# Environment and secrets
+.env
+.env.*
+!.env.example
+application-local.properties
+
+# Logs
+*.log
+
+# OS files
+.DS_Store
+Thumbs.db
