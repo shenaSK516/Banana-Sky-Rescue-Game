@@ -127,6 +127,36 @@ export default class BootScene extends Phaser.Scene {
             'successSound',
             '/assets/audio/success.mp3'
         );
+
+        this.load.image(
+            'mainMenuBackground',
+            '/assets/backgrounds/main-menu-background.png'
+        );
+
+        this.load.image(
+            'menuLogin',
+            '/assets/buttons/menu-login.png'
+        );
+
+        this.load.image(
+            'menuRegister',
+            '/assets/buttons/menu-register.png'
+        );
+
+        this.load.image(
+            'menuHowToPlay',
+            '/assets/buttons/menu-how-to-play.png'
+        );
+
+        this.load.image(
+            'backButton',
+            '/assets/buttons/back-button.png'
+        );
+
+        this.load.image(
+            'settingsButton',
+            '/assets/buttons/settings-button.png'
+        );
     }
 
     create() {
