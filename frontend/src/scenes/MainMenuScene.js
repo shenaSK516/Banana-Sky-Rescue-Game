@@ -2,6 +2,7 @@
 import Phaser from 'phaser';
 import ImageButton from '../components/ImageButton.js';
 import AudioManager from '../components/AudioManager.js';
+import BackButton from '../components/BackButton.js';
 
 export default class MainMenuScene extends Phaser.Scene {
     constructor() {
@@ -45,7 +46,7 @@ export default class MainMenuScene extends Phaser.Scene {
             'menuLogin',
             buttonWidth,
             () => this.handleLogin()
-        );
+);
 
         new ImageButton(
             this,
@@ -63,17 +64,20 @@ export default class MainMenuScene extends Phaser.Scene {
             'menuHowToPlay',
             buttonWidth,
             () => this.handleHowToPlay()
+            
         );
 
         // Back button
-        new ImageButton(
+        // Back to Opening Screen
+        new BackButton(this, 'OpeningScene');
+        /*new ImageButton(
             this,
             70,
             70,
             'backButton',
             75,
             () => this.scene.start('OpeningScene')
-        );
+        );*/
 
         // Settings button
         new ImageButton(
@@ -148,10 +152,14 @@ export default class MainMenuScene extends Phaser.Scene {
 
     handleLogin() {
         console.log('Login selected');
+        this.scene.start('LoginScene');
     }
 
     handleRegister() {
         console.log('Register selected');
+        this.scene.start('RegisterScene');
+
+        
     }
 
     handleHowToPlay() {
