@@ -1,7 +1,10 @@
 
 import Phaser from 'phaser';
+
 import AudioManager from '../components/AudioManager.js';
 import ImageButton from '../components/ImageButton.js';
+import authenticationService from '../components/AuthenticationService.js';
+
 import './otp-verification.css';
 
 export default class OTPVerificationScene extends Phaser.Scene {
@@ -11,9 +14,16 @@ export default class OTPVerificationScene extends Phaser.Scene {
     }
 
     create() {
+
         const { width, height } = this.scale;
 
-        // 1. SKY BACKGROUND
+        let sceneShuttingDown = false;
+        let verificationInProgress = false;
+        let resendInProgress = false;
+
+        // =========================================
+        // 1. BACKGROUND IMAGE
+        // =========================================
 
         this.add.image(
             width / 2,
@@ -23,7 +33,9 @@ export default class OTPVerificationScene extends Phaser.Scene {
         .setDisplaySize(width, height)
         .setDepth(0);
 
+        // =========================================
         // 2. TRANSPARENT VERIFICATION PANEL
+        // =========================================
 
         this.add.image(
             width * 0.5,
@@ -36,7 +48,9 @@ export default class OTPVerificationScene extends Phaser.Scene {
         )
         .setDepth(1);
 
-        // CLOSE BUTTON
+        // =========================================
+        // 3. CLOSE BUTTON
+        // =========================================
 
         const closeButton = new ImageButton(
             this,
@@ -44,19 +58,26 @@ export default class OTPVerificationScene extends Phaser.Scene {
             height * 0.240,
             'otpCloseButton',
             92,
-            () => this.scene.start('RegisterScene')
+            () => {
+                if (
+                    !verificationInProgress &&
+                    !resendInProgress
+                ) {
+                    this.scene.start('RegisterScene');
+                }
+            }
         );
 
-        // Ensure the button appears above the OTP panel
         closeButton.button.setDepth(5);
 
-        // EMAIL FROM REGISTRATION
+        // =========================================
+        // 4. EMAIL FROM REGISTRATION
+        // =========================================
 
         const email =
             this.registry.get('pendingRegistrationEmail') || '';
 
-        // Hide part of the email address
-        const maskEmail = (address) => {
+        const maskEmail = address => {
 
             const parts = address.split('@');
 
@@ -65,13 +86,14 @@ export default class OTPVerificationScene extends Phaser.Scene {
             }
 
             const name = parts[0];
-
             const masked = name.slice(0, 1) + '***';
 
             return masked + '@' + parts[1];
         };
 
+        // =========================================
         // 5. HTML VERIFICATION FORM
+        // =========================================
 
         const html = `
             <div class="banana-otp-form">
@@ -131,7 +153,7 @@ export default class OTPVerificationScene extends Phaser.Scene {
                         class="otp-resend"
                         disabled
                     >
-                        Resend Code (00:45)
+                        Resend Code (01:00)
                     </button>
 
                     <!-- Change email -->
@@ -148,7 +170,9 @@ export default class OTPVerificationScene extends Phaser.Scene {
             </div>
         `;
 
+        // =========================================
         // 6. ADD HTML FORM TO PHASER
+        // =========================================
 
         this.form = this.add.dom(
             width * 0.52,
@@ -159,10 +183,9 @@ export default class OTPVerificationScene extends Phaser.Scene {
 
         const root = this.form.node;
 
-
-        // Safe email display
-        root.querySelector('#otp-email-display').textContent =
-            '✉  ' + maskEmail(email);
+        const emailDisplay = root.querySelector(
+            '#otp-email-display'
+        );
 
         const form = root.querySelector('#otp-form');
 
@@ -171,11 +194,33 @@ export default class OTPVerificationScene extends Phaser.Scene {
         ];
 
         const error = root.querySelector('#otp-error');
-        const resend = root.querySelector('#otp-resend');
-        const changeEmail = root.querySelector('#otp-change-email');
 
-        // 6. Fill OTP boxes
-        const fillCode = (value) => {
+        const resend = root.querySelector('#otp-resend');
+
+        const changeEmail = root.querySelector(
+            '#otp-change-email'
+        );
+
+        const verifyButton = root.querySelector(
+            '.otp-verify-button'
+        );
+
+        emailDisplay.textContent =
+            '✉  ' + maskEmail(email);
+
+        // =========================================
+        // 7. OTP INPUT HELPERS
+        // =========================================
+
+        const clearCode = () => {
+
+            inputs.forEach(input => {
+                input.value = '';
+            });
+        };
+
+        const fillCode = value => {
+
             const digits = value
                 .replace(/\D/g, '')
                 .slice(0, 6);
@@ -187,7 +232,10 @@ export default class OTPVerificationScene extends Phaser.Scene {
             inputs[Math.min(digits.length, 5)].focus();
         };
 
-        // 7. OTP input events
+        // =========================================
+        // 8. OTP INPUT EVENTS
+        // =========================================
+
         inputs.forEach((input, index) => {
 
             input.addEventListener('input', () => {
@@ -195,12 +243,14 @@ export default class OTPVerificationScene extends Phaser.Scene {
                 const digits = input.value.replace(/\D/g, '');
 
                 if (digits.length > 1) {
+
                     fillCode(digits);
                     error.textContent = '';
                     return;
                 }
 
                 input.value = digits.slice(0, 1);
+
                 error.textContent = '';
 
                 if (input.value && index < 5) {
@@ -208,13 +258,14 @@ export default class OTPVerificationScene extends Phaser.Scene {
                 }
             });
 
-            input.addEventListener('keydown', (event) => {
+            input.addEventListener('keydown', event => {
 
                 if (
                     event.key === 'Backspace' &&
                     !input.value &&
                     index > 0
                 ) {
+
                     inputs[index - 1].focus();
                     inputs[index - 1].value = '';
                 }
@@ -223,6 +274,7 @@ export default class OTPVerificationScene extends Phaser.Scene {
                     event.key === 'ArrowLeft' &&
                     index > 0
                 ) {
+
                     event.preventDefault();
                     inputs[index - 1].focus();
                 }
@@ -231,12 +283,13 @@ export default class OTPVerificationScene extends Phaser.Scene {
                     event.key === 'ArrowRight' &&
                     index < 5
                 ) {
+
                     event.preventDefault();
                     inputs[index + 1].focus();
                 }
             });
 
-            input.addEventListener('paste', (event) => {
+            input.addEventListener('paste', event => {
 
                 event.preventDefault();
 
@@ -244,42 +297,130 @@ export default class OTPVerificationScene extends Phaser.Scene {
                     event.clipboardData.getData('text');
 
                 fillCode(pasted);
+
                 error.textContent = '';
             });
         });
 
-        // 8. Resend countdown
-        let secondsLeft = 45;
+        // =========================================
+        // 9. RESEND COUNTDOWN
+        // =========================================
 
-        const updateCountdown = () => {
+        let secondsLeft = 60;
+        let countdownEvent = null;
 
-            if (secondsLeft > 0) {
-                resend.disabled = true;
+        const formatTime = seconds => {
+
+            const minutes = Math.floor(seconds / 60);
+
+            const remainingSeconds = seconds % 60;
+
+            return (
+                String(minutes).padStart(2, '0') +
+                ':' +
+                String(remainingSeconds).padStart(2, '0')
+            );
+        };
+
+        const updateButtons = () => {
+
+            if (sceneShuttingDown) {
+                return;
+            }
+
+            verifyButton.disabled =
+                verificationInProgress || resendInProgress;
+
+            changeEmail.disabled =
+                verificationInProgress || resendInProgress;
+
+            resend.disabled =
+                verificationInProgress ||
+                resendInProgress ||
+                secondsLeft > 0;
+
+            verifyButton.setAttribute(
+                'aria-busy',
+                String(verificationInProgress)
+            );
+
+            resend.setAttribute(
+                'aria-busy',
+                String(resendInProgress)
+            );
+
+            if (resendInProgress) {
+
+                resend.textContent = 'Sending...';
+
+            } else if (secondsLeft > 0) {
 
                 resend.textContent =
-                    `Resend Code (00:${String(secondsLeft).padStart(2, '0')})`;
+                    `Resend Code (${formatTime(secondsLeft)})`;
 
             } else {
-                resend.disabled = false;
+
                 resend.textContent = 'Resend Code';
             }
         };
 
-        updateCountdown();
+        const startCountdown = (duration = 60) => {
 
-        const countdownEvent = this.time.addEvent({
-            delay: 1000,
-            repeat: 44,
-            callback: () => {
-                secondsLeft--;
-                updateCountdown();
+            // Remove any existing countdown first
+            if (countdownEvent) {
+
+                countdownEvent.remove();
+                countdownEvent = null;
             }
-        });
 
-        // 9. Verify OTP
-        form.addEventListener('submit', (event) => {
+            secondsLeft = duration;
+
+            updateButtons();
+
+            if (duration <= 0) {
+                return;
+            }
+
+            countdownEvent = this.time.addEvent({
+
+                delay: 1000,
+
+                repeat: duration - 1,
+
+                callback: () => {
+
+                    if (sceneShuttingDown) {
+                        return;
+                    }
+
+                    secondsLeft = Math.max(
+                        0,
+                        secondsLeft - 1
+                    );
+
+                    updateButtons();
+                }
+            });
+        };
+
+        // Start initial 60-second countdown
+        startCountdown(60);
+
+        // =========================================
+        // 10. VERIFY OTP THROUGH SPRING BOOT
+        // =========================================
+
+        form.addEventListener('submit', async event => {
 
             event.preventDefault();
+
+            if (
+                sceneShuttingDown ||
+                verificationInProgress ||
+                resendInProgress
+            ) {
+                return;
+            }
 
             AudioManager.playButtonClick(this);
 
@@ -289,7 +430,6 @@ export default class OTPVerificationScene extends Phaser.Scene {
                 .map(input => input.value)
                 .join('');
 
-            // Validate six digits
             if (!/^\d{6}$/.test(code)) {
 
                 error.textContent =
@@ -298,68 +438,194 @@ export default class OTPVerificationScene extends Phaser.Scene {
                 return;
             }
 
-            // Real verification will be connected to Spring Boot.
-            error.textContent =
-                'Verification service is not connected yet.';
+            if (!email) {
 
-            // After the backend confirms successful verification,
-            // navigate to the success screen using:
-            //
-            // this.scene.start('EmailVerifiedScene');
+                error.textContent =
+                    'Registration email not found. Please register again.';
+
+                return;
+            }
+
+            verificationInProgress = true;
+
+            updateButtons();
+
+            error.textContent = 'Verifying your email...';
+
+            try {
+
+                const result =
+                    await authenticationService.verifyEmail(
+                        email,
+                        code
+                    );
+
+                if (
+                    sceneShuttingDown ||
+                    !this.sys.isActive()
+                ) {
+                    return;
+                }
+
+                console.log(
+                    'Email verification successful:',
+                    result.message
+                );
+
+                clearCode();
+
+                this.registry.remove(
+                    'pendingRegistrationEmail'
+                );
+
+                this.scene.start('EmailVerifiedScene');
+
+            } catch (verificationError) {
+
+                if (
+                    sceneShuttingDown ||
+                    !this.sys.isActive()
+                ) {
+                    return;
+                }
+
+                error.textContent =
+                    verificationError.message ||
+                    'Verification failed. Please try again.';
+
+            } finally {
+
+                verificationInProgress = false;
+
+                if (
+                    !sceneShuttingDown &&
+                    this.sys.isActive()
+                ) {
+                    updateButtons();
+                }
+            }
         });
 
-        // 10. Resend code
-        resend.addEventListener('click', () => {
+        // =========================================
+        // 11. RESEND OTP THROUGH SPRING BOOT
+        // =========================================
+
+        resend.addEventListener('click', async () => {
+
+            if (
+                sceneShuttingDown ||
+                resendInProgress ||
+                verificationInProgress ||
+                secondsLeft > 0
+            ) {
+                return;
+            }
 
             AudioManager.playButtonClick(this);
 
-            // Later: call Spring Boot resend OTP endpoint.
-            error.textContent =
-                'Email service is not connected yet.';
+            error.textContent = '';
+
+            if (!email) {
+
+                error.textContent =
+                    'Registration email not found. Please register again.';
+
+                return;
+            }
+
+            resendInProgress = true;
+
+            updateButtons();
+
+            try {
+
+                const result =
+                    await authenticationService.resendOtp(
+                        email
+                    );
+
+                if (
+                    sceneShuttingDown ||
+                    !this.sys.isActive()
+                ) {
+                    return;
+                }
+
+                // The backend intentionally gives a
+                // generic response for account privacy.
+                error.textContent =
+                    result.message ||
+                    'If eligible, a verification code will be sent.';
+
+                // Clear the old code from the inputs
+                clearCode();
+
+                // Restart the 60-second cooldown
+                startCountdown(60);
+
+            } catch (resendError) {
+
+                if (
+                    sceneShuttingDown ||
+                    !this.sys.isActive()
+                ) {
+                    return;
+                }
+
+                error.textContent =
+                    resendError.message ||
+                    'Unable to resend the code. Please try again.';
+
+            } finally {
+
+                resendInProgress = false;
+
+                if (
+                    !sceneShuttingDown &&
+                    this.sys.isActive()
+                ) {
+                    updateButtons();
+                }
+            }
         });
 
-        // 11. Change email address
+        // =========================================
+        // 12. CHANGE EMAIL ADDRESS
+        // =========================================
+
         changeEmail.addEventListener('click', () => {
 
+            if (
+                sceneShuttingDown ||
+                verificationInProgress ||
+                resendInProgress
+            ) {
+                return;
+            }
+
             AudioManager.playButtonClick(this);
 
+            // Returns to registration.
+            // Does not update the existing account.
             this.scene.start('RegisterScene');
         });
 
-        // 12. Development-only preview
-        // Press Shift + V while on this screen to preview
-        // the Email Verified popup without verifying an account.
-        const previewSuccess = (event) => {
-            if (
-                import.meta.env.DEV &&
-                event.shiftKey &&
-                event.code === 'KeyV'
-            ) {
-                this.scene.start('EmailVerifiedScene');
-            }
-        };
+        // =========================================
+        // 13. SCENE CLEANUP
+        // =========================================
 
-        if (import.meta.env.DEV) {
-            this.input.keyboard.on('keydown', previewSuccess);
-        }
-
-        // 13. Cleanup
         this.events.once(
             Phaser.Scenes.Events.SHUTDOWN,
             () => {
-                countdownEvent.remove();
 
-                if (import.meta.env.DEV) {
-                    this.input.keyboard.off(
-                        'keydown',
-                        previewSuccess
-                    );
+                sceneShuttingDown = true;
+
+                if (countdownEvent) {
+
+                    countdownEvent.remove();
+                    countdownEvent = null;
                 }
             }
         );
     }
 }
-
-
-
-     

@@ -1,7 +1,10 @@
 
 import Phaser from 'phaser';
+
 import AudioManager from '../components/AudioManager.js';
 import ImageButton from '../components/ImageButton.js';
+import authenticationService from '../components/AuthenticationService.js';
+
 import './register.css';
 
 export default class RegisterScene extends Phaser.Scene {
@@ -11,6 +14,7 @@ export default class RegisterScene extends Phaser.Scene {
     }
 
     create() {
+
         const { width, height } = this.scale;
 
         // =========================================
@@ -278,6 +282,7 @@ export default class RegisterScene extends Phaser.Scene {
         const password = root.querySelector('#register-password');
         const confirm = root.querySelector('#register-confirm');
         const error = root.querySelector('#register-error');
+        const submitButton = root.querySelector('#register-submit');
 
         const strengthLabel = root.querySelector(
             '#strength-label'
@@ -289,15 +294,17 @@ export default class RegisterScene extends Phaser.Scene {
             )
         ];
 
-    
-        // BANANA TYPING ANIMATION
-      
+        // =========================================
+        // 8. BANANA TYPING ANIMATION
+        // =========================================
 
         let typingTimer = null;
 
         const onTyping = () => {
 
-            this.banana.setTexture('bananaClosed');
+            if (this.banana.active) {
+                this.banana.setTexture('bananaClosed');
+            }
 
             if (typingTimer !== null) {
                 clearTimeout(typingTimer);
@@ -318,9 +325,9 @@ export default class RegisterScene extends Phaser.Scene {
             input.addEventListener('input', onTyping);
         });
 
-       
-        //PASSWORD ICONS
-      
+        // =========================================
+        // 9. PASSWORD VISIBILITY BUTTONS
+        // =========================================
 
         root.querySelectorAll('.register-toggle-password')
             .forEach(button => {
@@ -361,9 +368,9 @@ export default class RegisterScene extends Phaser.Scene {
                 });
             });
 
-  
-        // PASSWORD STRENGTH
-        
+        // =========================================
+        // 10. PASSWORD STRENGTH INDICATOR
+        // =========================================
 
         const getStrength = value => {
 
@@ -397,6 +404,7 @@ export default class RegisterScene extends Phaser.Scene {
                 '#19ae65';
 
             strengthLabel.textContent = label;
+
             strengthLabel.style.color =
                 score === 0 ? '#52749A' : color;
 
@@ -416,13 +424,20 @@ export default class RegisterScene extends Phaser.Scene {
 
         updateStrength();
 
-       
-        //REGISTRATION VALIDATION
-   
+        // =========================================
+        // 11. REGISTRATION VALIDATION + BACKEND
+        // =========================================
 
-        form.addEventListener('submit', event => {
+        let registrationInProgress = false;
+        let sceneShuttingDown = false;
+
+        form.addEventListener('submit', async event => {
 
             event.preventDefault();
+
+            if (registrationInProgress || sceneShuttingDown) {
+                return;
+            }
 
             AudioManager.playButtonClick(this);
 
@@ -437,7 +452,7 @@ export default class RegisterScene extends Phaser.Scene {
             if (!/^[A-Za-z0-9_]{3,30}$/.test(usernameValue)) {
 
                 error.textContent =
-                    'Username must be 3–30 letters, numbers or underscores.';
+                    'Username must be 3-30 letters, numbers or underscores.';
 
                 username.focus();
                 return;
@@ -481,16 +496,68 @@ export default class RegisterScene extends Phaser.Scene {
                 return;
             }
 
-            // Backend integration will be added later.
-            error.textContent =
-                // Temporary frontend-only navigation for testing
-                this.registry.set('pendingRegistrationEmail', emailValue);
+            // Prevent duplicate registration requests
+            registrationInProgress = true;
+            submitButton.disabled = true;
+            submitButton.setAttribute('aria-busy', 'true');
 
+            error.textContent = 'Creating your account...';
+
+            try {
+
+                // Send registration details to Spring Boot
+                const result = await authenticationService.register(
+                    usernameValue,
+                    emailValue,
+                    passwordValue
+                );
+
+                if (sceneShuttingDown || !this.sys.isActive()) {
+                    return;
+                }
+
+                console.log(
+                    'Registration successful:',
+                    result.message
+                );
+
+                // Save only the email for OTP verification
+                this.registry.set(
+                    'pendingRegistrationEmail',
+                    emailValue
+                );
+
+                // Clear passwords from form fields
+                password.value = '';
+                confirm.value = '';
+
+                // Navigate to OTP verification screen
                 this.scene.start('OTPVerificationScene');
 
-            // Later:
-            // Send registration request to backend.
-            // Navigate to email OTP verification scene.
+            } catch (registrationError) {
+
+                if (sceneShuttingDown || !this.sys.isActive()) {
+                    return;
+                }
+
+                console.error(
+                    'Registration request failed:',
+                    registrationError.message
+                );
+
+                error.textContent =
+                    registrationError.message ||
+                    'Unable to register. Please try again.';
+
+            } finally {
+
+                registrationInProgress = false;
+
+                if (!sceneShuttingDown && this.sys.isActive()) {
+                    submitButton.disabled = false;
+                    submitButton.removeAttribute('aria-busy');
+                }
+            }
         });
 
         // =========================================
@@ -514,6 +581,8 @@ export default class RegisterScene extends Phaser.Scene {
         this.events.once(
             Phaser.Scenes.Events.SHUTDOWN,
             () => {
+
+                sceneShuttingDown = true;
 
                 if (typingTimer !== null) {
                     clearTimeout(typingTimer);
