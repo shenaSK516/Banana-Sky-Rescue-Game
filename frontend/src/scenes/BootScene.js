@@ -43,10 +43,12 @@ export default class BootScene extends Phaser.Scene {
             '/assets/audio/button-click.mp3'
         );
 
-        this.load.audio(
-            'successSound',
-            '/assets/audio/success.mp3'
-        );
+        //Reserved for the animal rescue success sound.
+
+        // this.load.audio(
+        //     'successSound',
+        //     '/assets/audio/success.mp3'
+        // );
 
         this.load.image(
             'mainMenuBackground',
@@ -126,11 +128,34 @@ export default class BootScene extends Phaser.Scene {
             'continueButton',
             '/assets/buttons/continue-button.png'
         );
+
+        this.load.image(
+        'authPlay',
+        '/assets/buttons/auth-play.png'
+        );
+
+        this.load.image(
+        'authProfile',
+        '/assets/buttons/auth-profile.png'
+        );
+
+        this.load.image(
+        'authHowToPlay',
+        '/assets/buttons/auth-how-to-play.png'
+        );
+
+        this.load.image(
+        'authLeaderboard',
+        '/assets/buttons/auth-leaderboard.png'
+        );
+
+        this.load.image(
+        'authLogout',
+        '/assets/buttons/auth-logout.png'
+        );
     }
 
     create() {
         this.scene.start('OpeningScene');
     }
 }
-
-

@@ -9,6 +9,7 @@ import RegisterScene from '../scenes/RegisterScene.js';
 import EmailRecoveryScene from '../scenes/EmailRecoveryScene.js';
 import OTPVerificationScene from '../scenes/OTPVerificationScene.js';
 import EmailVerifiedScene from '../scenes/EmailVerifiedScene.js';
+import AuthenticatedMainMenuScene from '../scenes/AuthenticatedMainMenuScene.js';
 
 const gameConfig = {
     type: Phaser.AUTO,
@@ -36,7 +37,8 @@ const gameConfig = {
         RegisterScene,
         EmailRecoveryScene,
         OTPVerificationScene,
-        EmailVerifiedScene
+        EmailVerifiedScene,
+        AuthenticatedMainMenuScene
     ]
 };
 
