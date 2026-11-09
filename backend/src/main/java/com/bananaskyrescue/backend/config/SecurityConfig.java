@@ -4,6 +4,7 @@ package com.bananaskyrescue.backend.config;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
+import org.springframework.http.MediaType;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
@@ -51,7 +52,16 @@ public class SecurityConfig {
 
                 .anyRequest().authenticated()
             )
-
+            .exceptionHandling(exceptions -> exceptions
+                .authenticationEntryPoint((request, response, authException) -> {
+                    response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                    response.setContentType(MediaType.APPLICATION_JSON_VALUE);
+                    response.setCharacterEncoding("UTF-8");
+                    response.getWriter().write(
+                    "{\"message\":\"Authentication required\"}"
+                    );
+                })
+            )
             .formLogin(form -> form
                 .loginProcessingUrl("/api/auth/login")
                 .usernameParameter("username")

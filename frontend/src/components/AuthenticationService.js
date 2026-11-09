@@ -197,8 +197,6 @@ class AuthenticationService {
             );
         }
 
-        // Login is managed by the server-side session.
-        // Never store the password or session ID in localStorage.
         return data;
     }
 
@@ -227,10 +225,16 @@ class AuthenticationService {
         }
 
         if (!response.ok) {
-            throw new Error(
-                'Player session is not authenticated.'
+            const error = new Error(
+                response.status === 401 || response.status === 403
+                    ? 'Player session is not authenticated.'
+                    : 'Unable to verify the player session.'
             );
+
+            error.status = response.status;
+            throw error;
         }
+
 
         let data;
 

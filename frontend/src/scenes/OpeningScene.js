@@ -2,6 +2,7 @@
 import Phaser from 'phaser';
 import ImageButton from '../components/ImageButton.js';
 import AudioManager from '../components/AudioManager.js';
+import authenticationService from '../components/AuthenticationService.js';
 
 export default class OpeningScene extends Phaser.Scene {
     constructor() {
@@ -9,8 +10,9 @@ export default class OpeningScene extends Phaser.Scene {
     }
 
     create() {
-        const { width, height } = this.scale;
+        this.sessionCheckInProgress = false;
 
+        const { width, height } = this.scale;
         // Background image fills the screen without stretching
         const background = this.add.image(
             width / 2,
@@ -43,7 +45,7 @@ export default class OpeningScene extends Phaser.Scene {
         AudioManager.initialize(this);
         AudioManager.startMusic(this);
 
-        
+
         this.input.on('pointerdown', () => {
             if (AudioManager.musicEnabled && AudioManager.soundEnabled) {
                 AudioManager.startMusic(this);
@@ -53,12 +55,12 @@ export default class OpeningScene extends Phaser.Scene {
         // Play button
         new ImageButton(
             this,
-            width / 2,
+            width  / 2,
             height * 0.82,
             'playButton',
             360,
             () => {
-                this.scene.start('MainMenuScene');
+                this.handlePlay();
             }
         );
 
@@ -132,7 +134,37 @@ export default class OpeningScene extends Phaser.Scene {
         updateIcons();
         });
     }
+
+
+    async handlePlay() {
+        if (this.sessionCheckInProgress) return;
+
+        this.sessionCheckInProgress = true;
+
+        try {
+            const player = await authenticationService.getCurrentPlayer();
+
+            if (!this.sys.isActive()) return;
+
+            this.registry.set('authenticatedPlayer', player.username);
+
+            this.sessionCheckInProgress = false;
+            this.scene.start('AuthenticatedMainMenuScene');
+
+        } catch (error) {
+            if (!this.sys.isActive()) return;
+
+            this.sessionCheckInProgress = false;
+
+            if (error.status === 401) {
+                this.registry.remove('authenticatedPlayer');
+                this.scene.start('MainMenuScene');
+                return;
+            }
+
+            console.error('Session verification failed:', error);
+        }
+    }
+
+
 }
-
-
- 
