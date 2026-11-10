@@ -316,10 +316,11 @@ export default class LevelSelectionScene extends Phaser.Scene {
                     onComplete: () => {
                         this.levelSelectionBusy = false;
 
-                        console.log(
-                            `Selected unlocked level ` +
-                            `${level.id}: ${level.name}`
-                        );
+                        console.log(`Selected unlocked level ${level.id}: ${level.name}`);
+
+                        this.scene.start('SublevelSelectionScene', {
+                            levelId: level.id
+                        });
 
                         // Future navigation:
                         // this.scene.start(

@@ -195,13 +195,65 @@ export default class BootScene extends Phaser.Scene {
             'levelGoldStar',
             '/assets/level-selection/level-gold-star.png'
         );
+
         this.load.image(
-        'levelPadlock',
-        '/assets/level-selection/level-padlock.png'
+            'levelPadlock',
+            '/assets/level-selection/level-padlock.png'
         );
+
         this.load.image(
-        'levelGreyStar',
-        '/assets/level-selection/grey-star.png'
+            'levelGreyStar',
+            '/assets/level-selection/grey-star.png'
+        );
+
+        this.load.image(
+            'sublevelSunnyBackground',
+            '/assets/sublevel-selection/sunny-skies-background.png'
+        );
+
+        this.load.image(
+            'sublevelWindyBackground',
+            '/assets/sublevel-selection/windy-heights-background.png'
+        );
+
+        this.load.image(
+            'sublevelStormBackground',
+            '/assets/sublevel-selection/storm-rescue-background.png'
+        );
+
+        this.load.image(
+            'sublevelRainbowBackground',
+            '/assets/sublevel-selection/rainbow-valley-background.png'
+        );
+
+        this.load.image(
+            'sublevelUnlockedIsland',
+            '/assets/sublevel-selection/stage-unlocked.png'
+        );
+
+        this.load.image(
+            'sublevelLockedIsland',
+            '/assets/sublevel-selection/stage-locked.png'
+        );
+
+        this.load.image(
+            'sublevelSunnyBanner',
+            '/assets/sublevel-selection/banners/sunny-skies-banner.png'
+        );
+
+        this.load.image(
+            'sublevelWindyBanner',
+            '/assets/sublevel-selection/banners/windy-heights-banner.png'
+        );
+
+        this.load.image(
+            'sublevelStormBanner',
+            '/assets/sublevel-selection/banners/storm-rescue-banner.png'
+        );
+
+        this.load.image(
+            'sublevelRainbowBanner',
+            '/assets/sublevel-selection/banners/rainbow-valley-banner.png'
         );
 
     }

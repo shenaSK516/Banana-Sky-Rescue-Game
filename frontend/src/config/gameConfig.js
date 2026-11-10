@@ -11,6 +11,7 @@ import OTPVerificationScene from '../scenes/OTPVerificationScene.js';
 import EmailVerifiedScene from '../scenes/EmailVerifiedScene.js';
 import AuthenticatedMainMenuScene from '../scenes/AuthenticatedMainMenuScene.js';
 import LevelSelectionScene from '../scenes/LevelSelectionScene.js';
+import SublevelSelectionScene from '../scenes/SublevelSelectionScene.js';
 
 const gameConfig = {
     type: Phaser.AUTO,
@@ -40,7 +41,8 @@ const gameConfig = {
         OTPVerificationScene,
         EmailVerifiedScene,
         AuthenticatedMainMenuScene,
-        LevelSelectionScene
+        LevelSelectionScene,
+        SublevelSelectionScene
     ]
 };
 
