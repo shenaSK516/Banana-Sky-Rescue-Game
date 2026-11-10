@@ -10,6 +10,7 @@ import EmailRecoveryScene from '../scenes/EmailRecoveryScene.js';
 import OTPVerificationScene from '../scenes/OTPVerificationScene.js';
 import EmailVerifiedScene from '../scenes/EmailVerifiedScene.js';
 import AuthenticatedMainMenuScene from '../scenes/AuthenticatedMainMenuScene.js';
+import LevelSelectionScene from '../scenes/LevelSelectionScene.js';
 
 const gameConfig = {
     type: Phaser.AUTO,
@@ -38,7 +39,8 @@ const gameConfig = {
         EmailRecoveryScene,
         OTPVerificationScene,
         EmailVerifiedScene,
-        AuthenticatedMainMenuScene
+        AuthenticatedMainMenuScene,
+        LevelSelectionScene
     ]
 };
 

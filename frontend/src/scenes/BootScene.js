@@ -153,6 +153,57 @@ export default class BootScene extends Phaser.Scene {
         'authLogout',
         '/assets/buttons/auth-logout.png'
         );
+
+
+        // Level Selection Screen assets
+        this.load.image(
+            'levelSelectionBackground',
+            '/assets/level-selection/level-selection-background.png'
+        );
+
+        this.load.image(
+            'levelSunnySkies',
+            '/assets/level-selection/level-sunny-skies.png'
+        );
+
+        this.load.image(
+            'levelWindyHeights',
+            '/assets/level-selection/level-windy-heights.png'
+        );
+
+        this.load.image(
+            'levelStormRescue',
+            '/assets/level-selection/level-storm-rescue.png'
+        );
+
+        this.load.image(
+            'levelRainbowValley',
+            '/assets/level-selection/level-rainbow-valley.png'
+        );
+
+        this.load.image(
+            'levelPlayerNameplate',
+            '/assets/level-selection/level-player-nameplate.png'
+        );
+
+        this.load.image(
+            'levelStarCounter',
+            '/assets/level-selection/level-star-counter.png'
+        );
+
+        this.load.image(
+            'levelGoldStar',
+            '/assets/level-selection/level-gold-star.png'
+        );
+        this.load.image(
+        'levelPadlock',
+        '/assets/level-selection/level-padlock.png'
+        );
+        this.load.image(
+        'levelGreyStar',
+        '/assets/level-selection/grey-star.png'
+        );
+
     }
 
     create() {
