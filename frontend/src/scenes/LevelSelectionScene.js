@@ -2,19 +2,93 @@
 import Phaser from 'phaser';
 import ImageButton from '../components/ImageButton.js';
 import AudioManager from '../components/AudioManager.js';
+import { fetchPlayerProgress } from '../services/playerProgressApi.js';
 
 export default class LevelSelectionScene extends Phaser.Scene {
     constructor() {
         super('LevelSelectionScene');
     }
 
+    // LOAD PLAYER PROGRESS FROM BACKEND
+
+    async loadPlayerProgress() {
+        this.levelSelectionBusy = true;
+
+        try {
+            const progress = await fetchPlayerProgress();
+
+            // Ignore responses after leaving this scene.
+            if (!this.sys.isActive()) return;
+
+            if (
+                !Array.isArray(progress) ||
+                progress.length !== 4 ||
+                ![1, 2, 3, 4].every(id =>
+                    progress.some(item =>
+                        item.mainLevelId === id &&
+                        typeof item.unlocked === 'boolean' &&
+                        Array.isArray(item.sublevels) &&
+                        item.sublevels.length === 3 &&
+                        [1, 2, 3].every(sublevelId =>
+                            item.sublevels.some(sublevel =>
+                                sublevel.sublevelId === sublevelId &&
+                                typeof sublevel.completed === 'boolean'
+                            )
+                        )
+                    )
+                )
+            ) {
+                throw new Error('Invalid player progress response.');
+            }
+
+            this.playerProgress = progress;
+
+            console.log('Main level progress loaded:', progress);
+
+            // Only render level cards after receiving progress.
+            this.renderLevelCards();
+
+            this.levelSelectionBusy = false;
+
+        } catch (error) {
+            if (!this.sys.isActive()) return;
+
+            console.error('Unable to load level progress:', error);
+
+            // Keep level selection disabled on failure.
+            this.levelSelectionBusy = true;
+
+            if (this.loadingText) {
+                this.loadingText.destroy();
+                this.loadingText = null;
+            }
+
+            this.add.text(
+                this.scale.width / 2,
+                this.scale.height * 0.55,
+                'Unable to load levels.\nPlease check your connection and try again.',
+                {
+                    fontFamily: 'Arial, sans-serif',
+                    fontSize: '24px',
+                    fontStyle: 'bold',
+                    color: '#ffffff',
+                    stroke: '#164b9c',
+                    strokeThickness: 4,
+                    align: 'center'
+                }
+            ).setOrigin(0.5).setDepth(20);
+        }
+    }
+
+    // CREATE SCENE
+
     create() {
         const { width, height } = this.scale;
 
-        // Prevent repeated level selections
-        this.levelSelectionBusy = false;
+        this.levelSelectionBusy = true;
+        this.playerProgress = [];
 
-        // 1. Level Selection background
+        // Background
         const background = this.add.image(
             width / 2,
             height / 2,
@@ -28,7 +102,72 @@ export default class LevelSelectionScene extends Phaser.Scene {
             )
         );
 
-        // 2. Four main levels
+        // Player nameplate
+        this.createPlayerNameplate(width, height);
+
+        // Points counter
+        this.createStarCounter(width, height);
+
+        // Back button
+        new ImageButton(
+            this,
+            65,
+            65,
+            'backButton',
+            65,
+            () => {
+                this.scene.start('AuthenticatedMainMenuScene');
+            }
+        );
+
+        // Settings button
+        new ImageButton(
+            this,
+            width - 65,
+            height - 65,
+            'settingsButton',
+            65,
+            () => {
+                if (this.scene.manager.keys['SettingsScene']) {
+                    this.scene.start('SettingsScene');
+                } else {
+                    console.log('Settings Scene coming soon!');
+                }
+            }
+        );
+
+        // Music and sound controls
+        this.createAudioControls(height);
+
+        // Loading message while waiting for backend
+        this.loadingText = this.add.text(
+            width / 2,
+            height * 0.55,
+            'Loading levels...',
+            {
+                fontFamily: 'Arial, sans-serif',
+                fontSize: '26px',
+                fontStyle: 'bold',
+                color: '#ffffff',
+                stroke: '#164b9c',
+                strokeThickness: 4
+            }
+        ).setOrigin(0.5).setDepth(20);
+
+        // Fetch progress from Spring Boot / MySQL.
+        this.loadPlayerProgress();
+    }
+
+    // RENDER FOUR MAIN LEVEL CARDS
+
+    renderLevelCards() {
+        const { width, height } = this.scale;
+
+        if (this.loadingText) {
+            this.loadingText.destroy();
+            this.loadingText = null;
+        }
+
         const levels = [
             {
                 id: 1,
@@ -52,62 +191,48 @@ export default class LevelSelectionScene extends Phaser.Scene {
             }
         ];
 
-        // 3. Temporary frontend completion data
-        // Each boolean represents one sublevel.
-        // false = incomplete
-        // true = successfully completed
-        const levelProgress = {
-            1: [false, false, false],
-            2: [false, false, false],
-            3: [false, false, false],
-            4: [false, false, false]
-        };
-
-        // 4. Check whether a main level is unlocked
-        const isLevelUnlocked = (levelId) => {
-            // First main level is always unlocked
-            if (levelId === 1) {
-                return true;
-            }
-
-            // Check the previous main level
-            const previousLevelProgress =
-                levelProgress[levelId - 1];
-
-            return previousLevelProgress.every(
-                (completed) => completed === true
-            );
-        };
-
-        // Display unlocking status in console
-        levels.forEach((level) => {
-            console.log(
-                `${level.name}: ${
-                    isLevelUnlocked(level.id)
-                        ? 'UNLOCKED'
-                        : 'LOCKED'
-                }`
-            );
-        });
-
-        // 5. Card layout
+        // Keep the original card layout.
         const cardWidth = width * 0.205;
         const cardSpacing = width * 0.225;
         const startX = width / 2 - cardSpacing * 1.5;
         const cardY = height * 0.55;
         const maxCardHeight = height * 0.57;
 
-        // 6. Create interactive level containers
         levels.forEach((level, index) => {
+
+            // Find this main level in the backend response.
+            const mainLevelProgress = this.playerProgress.find(
+                item => item.mainLevelId === level.id
+            );
+
+            // The backend determines unlocking status.
+            const unlocked =
+                mainLevelProgress?.unlocked === true;
+
+            // Determine the completion state of all 3 sublevels.
+            const completedStages = [1, 2, 3].map(
+                sublevelId =>
+                    mainLevelProgress?.sublevels.some(
+                        sublevel =>
+                            sublevel.sublevelId === sublevelId &&
+                            sublevel.completed === true
+                    ) === true
+            );
+
+            console.log(
+                `${level.name}: ${unlocked ? 'UNLOCKED' : 'LOCKED'}`,
+                completedStages
+            );
+
             const x = startX + index * cardSpacing;
 
-            // Group card, stars, and padlock together
+            // Group the card, padlock and stars.
             const levelContainer = this.add.container(
                 x,
                 cardY
             );
 
-            // Create main-level card
+            // Main-level artwork
             const card = this.add.image(
                 0,
                 0,
@@ -120,27 +245,19 @@ export default class LevelSelectionScene extends Phaser.Scene {
             );
 
             card.setScale(normalScale);
-
             levelContainer.add(card);
 
-            // 7. Check unlocking status
-            const unlocked = isLevelUnlocked(level.id);
+            // LOCKED CARD APPEARANCE
 
-            // Apply a muted tint only to locked cards.
-            // The separate padlock remains golden.
             if (!unlocked) {
                 card.setTint(0x888888);
-            }
 
-            // 8. Add padlock to locked levels
-            if (!unlocked) {
                 const padlock = this.add.image(
                     0,
                     -card.displayHeight * 0.02,
                     'levelPadlock'
                 );
 
-                // Padlock size relative to card width
                 const padlockWidth =
                     card.displayWidth * 0.27;
 
@@ -148,13 +265,10 @@ export default class LevelSelectionScene extends Phaser.Scene {
                     padlockWidth / padlock.width
                 );
 
-                // Add to same container
                 levelContainer.add(padlock);
             }
 
-            // 9. Add three completion stars
-            const completedStages =
-                levelProgress[level.id];
+            // COMPLETION STARS
 
             const starSize =
                 card.displayWidth * 0.16;
@@ -162,7 +276,6 @@ export default class LevelSelectionScene extends Phaser.Scene {
             const starSpacing =
                 card.displayWidth * 0.22;
 
-            // Individual star alignment
             const starYOffset = {
                 1: 0.37,
                 2: 0.385,
@@ -176,13 +289,16 @@ export default class LevelSelectionScene extends Phaser.Scene {
 
             completedStages.forEach(
                 (completed, stageIndex) => {
+
                     const starX =
                         (stageIndex - 1) * starSpacing;
 
                     const star = this.add.image(
                         starX,
                         starY,
-                        completed ? 'levelGoldStar' : 'levelGreyStar'
+                        completed
+                            ? 'levelGoldStar'
+                            : 'levelGreyStar'
                     );
 
                     star.setDisplaySize(
@@ -190,36 +306,27 @@ export default class LevelSelectionScene extends Phaser.Scene {
                         starSize
                     );
 
-                    // UPDATED: Completion star appearance
-                    // Grey = incomplete
-                    // Gold = successfully completed
                     if (!completed) {
-                        // Remove the original golden color
-                        // while preserving the star's details.
                         if (star.preFX) {
                             star.preFX
                                 .addColorMatrix()
                                 .grayscale();
                         } else {
-                            // Fallback if preFX is unavailable
                             star.setTint(0x888888);
                         }
 
-                        // Slightly soften incomplete stars
                         star.setAlpha(0.85);
                     } else {
-                        // Keep completed stars bright gold
                         star.clearTint();
                         star.setAlpha(1);
                     }
 
-                    // Stars belong to the same container
-                    // so they hover together with the card.
                     levelContainer.add(star);
                 }
             );
 
-            // 10. Make entire container interactive
+            // INTERACTIVE CARD
+
             levelContainer.setSize(
                 card.displayWidth,
                 card.displayHeight
@@ -229,13 +336,12 @@ export default class LevelSelectionScene extends Phaser.Scene {
                 useHandCursor: true
             });
 
-            // 11. Hover animation
+            // HOVER ANIMATION
+
             levelContainer.on('pointerover', () => {
                 if (this.levelSelectionBusy) return;
 
-                this.tweens.killTweensOf(
-                    levelContainer
-                );
+                this.tweens.killTweensOf(levelContainer);
 
                 this.tweens.add({
                     targets: levelContainer,
@@ -246,13 +352,10 @@ export default class LevelSelectionScene extends Phaser.Scene {
                 });
             });
 
-            // 12. Restore normal size
             levelContainer.on('pointerout', () => {
                 if (this.levelSelectionBusy) return;
 
-                this.tweens.killTweensOf(
-                    levelContainer
-                );
+                this.tweens.killTweensOf(levelContainer);
 
                 this.tweens.add({
                     targets: levelContainer,
@@ -263,29 +366,26 @@ export default class LevelSelectionScene extends Phaser.Scene {
                 });
             });
 
-            // 13. Click interaction
+            // CLICK INTERACTION
+
             levelContainer.on('pointerdown', () => {
                 if (this.levelSelectionBusy) return;
 
                 AudioManager.playButtonClick(this);
 
-                this.tweens.killTweensOf(
-                    levelContainer
-                );
+                this.tweens.killTweensOf(levelContainer);
 
-                // Locked level interaction
+                // Locked main level
                 if (!unlocked) {
                     console.log(
                         `${level.name} is locked. ` +
-                        'Complete all three stages ' +
-                        'of the previous level first.'
+                        'Complete all three sublevels ' +
+                        'of the previous main level first.'
                     );
 
-                    // Shake locked card
                     this.levelSelectionBusy = true;
 
-                    const originalX =
-                        levelContainer.x;
+                    const originalX = levelContainer.x;
 
                     this.tweens.add({
                         targets: levelContainer,
@@ -303,7 +403,7 @@ export default class LevelSelectionScene extends Phaser.Scene {
                     return;
                 }
 
-                // Unlocked level interaction
+                // Unlocked main level
                 this.levelSelectionBusy = true;
 
                 this.tweens.add({
@@ -316,73 +416,24 @@ export default class LevelSelectionScene extends Phaser.Scene {
                     onComplete: () => {
                         this.levelSelectionBusy = false;
 
-                        console.log(`Selected unlocked level ${level.id}: ${level.name}`);
+                        console.log(
+                            `Selected unlocked level ${level.id}: ${level.name}`
+                        );
 
-                        this.scene.start('SublevelSelectionScene', {
-                            levelId: level.id
-                        });
-
-                        // Future navigation:
-                        // this.scene.start(
-                        //     'SublevelSelectionScene',
-                        //     {
-                        //         levelId: level.id
-                        //     }
-                        // );
+                        this.scene.start(
+                            'SublevelSelectionScene',
+                            {
+                                levelId: level.id
+                            }
+                        );
                     }
                 });
             });
         });
-
-        // 14. Player nameplate
-        this.createPlayerNameplate(width, height);
-
-        // 15. Total points counter
-        this.createStarCounter(width, height);
-
-        // 16. Back button
-        new ImageButton(
-            this,
-            65,
-            65,
-            'backButton',
-            65,
-            () => {
-                this.scene.start(
-                    'AuthenticatedMainMenuScene'
-                );
-            }
-        );
-
-        // 17. Settings button
-        new ImageButton(
-            this,
-            width - 65,
-            height - 65,
-            'settingsButton',
-            65,
-            () => {
-                if (
-                    this.scene.manager.keys[
-                        'SettingsScene'
-                    ]
-                ) {
-                    this.scene.start(
-                        'SettingsScene'
-                    );
-                } else {
-                    console.log(
-                        'Settings Scene coming soon!'
-                    );
-                }
-            }
-        );
-
-        // 18. Music and sound controls
-        this.createAudioControls(height);
     }
 
-    // Display authenticated username
+    // PLAYER NAMEPLATE
+
     createPlayerNameplate(width, height) {
         const x = width * 0.18;
         const y = height * 0.11;
@@ -405,9 +456,7 @@ export default class LevelSelectionScene extends Phaser.Scene {
         nameplate.setDepth(10);
 
         const username =
-            this.registry.get(
-                'authenticatedPlayer'
-            ) || 'Player';
+            this.registry.get('authenticatedPlayer') || 'Player';
 
         const usernameText = this.add.text(
             x + plateWidth * 0.10,
@@ -427,20 +476,18 @@ export default class LevelSelectionScene extends Phaser.Scene {
             .setOrigin(0.5)
             .setDepth(11);
 
-        // Fit longer usernames inside nameplate
         usernameText.setScale(
             Math.min(
                 1,
                 (plateWidth * 0.58) /
-                    Math.max(
-                        usernameText.width,
-                        1
-                    )
+                    Math.max(usernameText.width, 1)
             )
         );
     }
 
-    // Display total earned points
+    // POINTS COUNTER
+
+
     createStarCounter(width, height) {
         const x = width * 0.88;
         const y = height * 0.11;
@@ -462,7 +509,8 @@ export default class LevelSelectionScene extends Phaser.Scene {
 
         counter.setDepth(10);
 
-        // Temporary value until backend integration
+        // Points are separate from completion stars.
+        // This remains temporary until points API integration.
         const totalPoints = 0;
 
         this.add.text(
@@ -482,8 +530,10 @@ export default class LevelSelectionScene extends Phaser.Scene {
         .setDepth(11);
     }
 
-    // Music and sound controls
+    // MUSIC AND SOUND CONTROLS
+
     createAudioControls(height) {
+
         // Music button
         const musicButton = this.add.image(
             65,
@@ -515,14 +565,10 @@ export default class LevelSelectionScene extends Phaser.Scene {
         effectsButton.setDepth(100);
 
         // Red strike lines
-        const musicStrike =
-            this.add.graphics();
-
+        const musicStrike = this.add.graphics();
         musicStrike.setDepth(101);
 
-        const effectsStrike =
-            this.add.graphics();
-
+        const effectsStrike = this.add.graphics();
         effectsStrike.setDepth(101);
 
         const drawStrike = (
@@ -572,31 +618,16 @@ export default class LevelSelectionScene extends Phaser.Scene {
         updateIcons();
 
         // Toggle background music
-        musicButton.on(
-            'pointerdown',
-            () => {
-                AudioManager.playButtonClick(
-                    this
-                );
-
-                AudioManager.toggleMusic(
-                    this
-                );
-
-                updateIcons();
-            }
-        );
+        musicButton.on('pointerdown', () => {
+            AudioManager.playButtonClick(this);
+            AudioManager.toggleMusic(this);
+            updateIcons();
+        });
 
         // Toggle sound effects
-        effectsButton.on(
-            'pointerdown',
-            () => {
-                AudioManager.toggleSound(
-                    this
-                );
-
-                updateIcons();
-            }
-        );
+        effectsButton.on('pointerdown', () => {
+            AudioManager.toggleSound(this);
+            updateIcons();
+        });
     }
 }
