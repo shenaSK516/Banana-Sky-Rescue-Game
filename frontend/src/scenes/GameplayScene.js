@@ -2094,7 +2094,7 @@ createEnergyHUD() {
     const { width, height } = this.scale;
 
     // Initial energy value
-    this.bananaEnergy = 10; // Temporary testing only
+    this.bananaEnergy = 100;
 
     // =====================================
     // ENERGY BAR POSITION
