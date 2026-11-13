@@ -1,5 +1,5 @@
 
-import Phaser, { DOM } from 'phaser';
+import Phaser from 'phaser';
 
 import BootScene from '../scenes/BootScene.js';
 import OpeningScene from '../scenes/OpeningScene.js';
@@ -12,6 +12,7 @@ import EmailVerifiedScene from '../scenes/EmailVerifiedScene.js';
 import AuthenticatedMainMenuScene from '../scenes/AuthenticatedMainMenuScene.js';
 import LevelSelectionScene from '../scenes/LevelSelectionScene.js';
 import SublevelSelectionScene from '../scenes/SublevelSelectionScene.js';
+import GameplayScene from '../scenes/GameplayScene.js';
 
 const gameConfig = {
     type: Phaser.AUTO,
@@ -42,7 +43,8 @@ const gameConfig = {
         EmailVerifiedScene,
         AuthenticatedMainMenuScene,
         LevelSelectionScene,
-        SublevelSelectionScene
+        SublevelSelectionScene,
+        GameplayScene
     ]
 };
 

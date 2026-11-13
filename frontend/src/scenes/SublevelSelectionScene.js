@@ -442,15 +442,13 @@ export default class SublevelSelectionScene extends Phaser.Scene {
                     }
                 );
 
-                // Future gameplay navigation:
-                //
-                // this.scene.start(
-                //     'GameplayScene',
-                //     {
-                //         mainLevelId: this.levelId,
-                //         sublevelId: stageNumber
-                //     }
-                // );
+                this.sublevelSelectionBusy = true;
+
+                this.scene.start('GameplayScene', {
+                    mainLevelId: this.levelId,
+                    sublevelId: stageNumber
+                });
+
                 //
                 // IMPORTANT:
                 // Selecting a level does not complete it.
