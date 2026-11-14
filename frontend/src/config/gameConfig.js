@@ -13,6 +13,7 @@ import AuthenticatedMainMenuScene from '../scenes/AuthenticatedMainMenuScene.js'
 import LevelSelectionScene from '../scenes/LevelSelectionScene.js';
 import SublevelSelectionScene from '../scenes/SublevelSelectionScene.js';
 import GameplayScene from '../scenes/GameplayScene.js';
+import LeaderboardScene from '../scenes/LeaderboardScene.js';
 
 const gameConfig = {
     type: Phaser.AUTO,
@@ -44,7 +45,8 @@ const gameConfig = {
         AuthenticatedMainMenuScene,
         LevelSelectionScene,
         SublevelSelectionScene,
-        GameplayScene
+        GameplayScene,
+        LeaderboardScene
     ]
 };
 
