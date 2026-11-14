@@ -438,6 +438,24 @@ export default class BootScene extends Phaser.Scene {
         );
 
 
+        // =====================================
+        // GAME OVER POPUP ASSETS
+        // =====================================
+
+        this.load.image(
+            'gameOverPanel',
+            '/assets/gameplay/ui/game-over-panel.png'
+        );
+
+        this.load.image(
+            'pandaExhausted',
+            '/assets/gameplay/player/panda-exhausted.png'
+        );
+
+        this.load.image(
+            'goldenBanana',
+            '/assets/gameplay/collectibles/golden-banana.png'
+        );
 
     }
 
