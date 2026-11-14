@@ -723,6 +723,77 @@ export default class GameplayScene extends Phaser.Scene {
         popup.add(submitButton);
 
 
+        // BANANA API FAILURE RECOVERY
+
+        let recoveryVisible = false;
+
+        const showPuzzleRecovery = (message) => {
+
+            if (
+                recoveryVisible ||
+                !this.sys.isActive() ||
+                !this.isPuzzleOpen ||
+                this.bananaPuzzlePopup !== popup
+            ) {
+                return;
+            }
+
+            recoveryVisible = true;
+
+            // Show an understandable error message.
+            placeholder.setVisible(true);
+            placeholder.setText(message);
+            placeholder.setWordWrapWidth(width * 0.42);
+            placeholder.setAlign('center');
+
+            // Hide controls that cannot be used.
+            answerInput.setVisible(false);
+            submitButton.setVisible(false);
+            submitButton.disableInteractive();
+
+            // Allow the player to continue without a reward.
+            const recoveryButton = this.add.text(
+                width / 2,
+                height * 0.79,
+                'Continue Rescue (No Bonus)',
+                {
+                    fontFamily: 'Arial, sans-serif',
+                    fontSize: `${Math.round(height * 0.024)}px`,
+                    fontStyle: 'bold',
+                    color: '#ffffff',
+                    backgroundColor: '#e99b00',
+                    padding: { x: 18, y: 12 }
+                }
+            ).setOrigin(0.5);
+
+            recoveryButton.setInteractive({
+                useHandCursor: true
+            });
+
+            popup.add(recoveryButton);
+
+            recoveryButton.once('pointerdown', () => {
+
+                // Remove the HTML input and popup.
+                answerInput.destroy();
+                popup.destroy(true);
+
+                this.bananaPuzzlePopup = null;
+                this.activeBananaPuzzle = null;
+
+                // Resume gameplay without awarding energy.
+                this.isPuzzleOpen = false;
+                this.time.paused = false;
+                this.tweens.resumeAll();
+
+                console.log(
+                    'Puzzle unavailable. Rescue resumed without bonus.'
+                );
+            });
+        };
+
+
+
         // submit the answer to spring boot
 
         let isSubmittingAnswer = false;
@@ -903,6 +974,8 @@ export default class GameplayScene extends Phaser.Scene {
             }
 
 
+
+
             } catch (error) {
 
                 console.error(
@@ -915,10 +988,23 @@ export default class GameplayScene extends Phaser.Scene {
                     this.isPuzzleOpen &&
                     this.bananaPuzzlePopup === popup
                 ) {
-                    submitButton.setText('Try Again');
-                    submitButton.setInteractive({
-                        useHandCursor: true
+
+                    // Hide the puzzle image so the recovery message remains clearly visible.
+                    popup.list.forEach((child) => {
+
+                        if (
+                            child.texture?.key?.startsWith('bananaPuzzle-')
+                        ) {
+                            child.setVisible(false);
+                        }
+
                     });
+
+                    // Allow gameplay to continue safely.
+                    showPuzzleRecovery(
+                        'Unable to verify your answer.\nContinue rescue without a bonus.'
+                    );
+
                 }
 
             } finally {
@@ -926,6 +1012,7 @@ export default class GameplayScene extends Phaser.Scene {
                 isSubmittingAnswer = false;
 
             }
+
         });
 
 
@@ -961,9 +1048,15 @@ export default class GameplayScene extends Phaser.Scene {
                 this.load.off(completeEvent, onImageLoaded);
                 this.load.off('loaderror', onImageLoadError);
 
+
                 if (isPopupOpen()) {
-                    placeholder.setText('Unable to display puzzle image.');
+
+                    showPuzzleRecovery(
+                        'Puzzle image could not be loaded.\nContinue rescue without a bonus.'
+                    );
+
                 }
+
 
                 console.error('Banana puzzle image failed to load.');
             };
@@ -1032,8 +1125,8 @@ export default class GameplayScene extends Phaser.Scene {
                 if (
                     this.sys.isActive() && this.isPuzzleOpen && this.bananaPuzzlePopup === popup
                 ) {
-                    placeholder.setText(
-                        'Unable to load puzzle. Please try again.'
+                    showPuzzleRecovery(
+                        'Banana API is unavailable.\nContinue rescue without a bonus.'
                     );
                 }
             });
