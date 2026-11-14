@@ -3,6 +3,7 @@ import ImageButton from '../components/ImageButton.js';
 import AudioManager from '../components/AudioManager.js';
 import { fetchPlayerProgress } from '../services/playerProgressApi.js';
 import {startBananaPuzzle,submitBananaPuzzleAnswer} from '../services/bananaPuzzleApi.js';
+import { saveCompletedLevelScore } from '../services/playerScoreApi.js';
 
 export default class GameplayScene extends Phaser.Scene {
 
@@ -72,6 +73,8 @@ export default class GameplayScene extends Phaser.Scene {
         this.energyElapsedMs = 0;
         this.activePlayMs = 0;
         this.isPuzzleOpen = false;
+        // Prevent duplicate score submissions.
+        this.scoreSaveRequested = false;
 
         // Animal rescue state
         this.rescueAnimals = [];
@@ -2165,6 +2168,74 @@ export default class GameplayScene extends Phaser.Scene {
                 energyBonus,
                 finalScore: this.currentScore
             });
+
+
+        // SAVE COMPLETED LEVEL SCORE TO MYSQL
+
+        if (!this.scoreSaveRequested) {
+
+            this.scoreSaveRequested = true;
+
+            console.log('Saving completed level score...');
+
+            saveCompletedLevelScore({
+
+                mainLevelId: Number(this.mainLevelId),
+
+                sublevelId: Number(this.sublevelId),
+
+                rescuedAnimals: this.rescuedCount,
+
+                activeSeconds: activeSeconds,
+
+                remainingEnergy: this.bananaEnergy
+
+            })
+            .then((result) => {
+
+                console.log(
+                    'PLAYER SCORE SAVED SUCCESSFULLY!',
+                    result
+                );
+
+                console.log(
+                    'Current Attempt Score:',
+                    result.submittedScore
+                );
+
+                console.log(
+                    'Personal Best Score:',
+                    result.bestScore
+                );
+
+                console.log(
+                    'New Personal Best:',
+                    result.newPersonalBest
+                );
+
+                if (result.submittedScore !== this.currentScore) {
+                    console.warn(
+                        'Frontend and backend score calculations differ.',
+                        {
+                            frontendScore: this.currentScore,
+                            backendScore: result.submittedScore
+                        }
+                    );
+                }
+
+            })
+            .catch((error) => {
+
+                console.error(
+                    'Failed to save completed level score:',
+                    error
+                );
+
+
+            });
+
+        }
+
 
 
             // Stop the panda's floating animation.
