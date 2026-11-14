@@ -27,6 +27,14 @@ public class Player {
     @Column(name = "email", nullable = false, unique = true, length = 254)
     private String email;
 
+
+    @Column(name = "display_name", length = 40)
+    private String displayName;
+
+    @Column(name = "avatar_filename", length = 100)
+    private String avatarFilename;
+
+
     @Column(name = "password_hash", nullable = false)
     private String passwordHash;
 
@@ -84,6 +92,24 @@ public class Player {
     public void setEmail(String email) {
         this.email = email;
     }
+
+
+    public String getDisplayName() {
+        return displayName;
+    }
+
+    public void setDisplayName(String displayName) {
+        this.displayName = displayName;
+    }
+
+    public String getAvatarFilename() {
+        return avatarFilename;
+    }
+
+    public void setAvatarFilename(String avatarFilename) {
+        this.avatarFilename = avatarFilename;
+    }
+
 
     public String getPasswordHash() {
         return passwordHash;
