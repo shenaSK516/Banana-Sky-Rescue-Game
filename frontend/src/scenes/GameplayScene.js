@@ -70,6 +70,7 @@ export default class GameplayScene extends Phaser.Scene {
 
         // Energy state
         this.energyElapsedMs = 0;
+        this.activePlayMs = 0;
         this.isPuzzleOpen = false;
 
         // Animal rescue state
@@ -1918,6 +1919,19 @@ export default class GameplayScene extends Phaser.Scene {
             // Update rescued animal count.
             this.rescuedCount++;
 
+            // Award points for rescuing an animal.
+            this.currentScore += 100;
+
+            // Update the existing Score HUD.
+            if (this.scoreText) {
+                this.scoreText.setText(`${this.currentScore}`);
+            }
+
+            console.log(
+                'Animal rescued! Current Score:',
+                this.currentScore
+            );
+
             //ANIMAL RESCUE ENERGY REWARD
 
             // Each successfully rescued animal restores 10 Banana Energy.
@@ -2115,6 +2129,43 @@ export default class GameplayScene extends Phaser.Scene {
 
             // Ensure the final landing has finished.
             this.levelCompleted = true;
+
+
+            // FINAL LEVEL SCORE CALCULATION
+
+            // Active seconds spent playing.
+            const activeSeconds = Math.floor(
+                this.activePlayMs / 1000
+            );
+
+            // Faster rescue earns more points.
+            const timeBonus = Math.max(
+                0,
+                500 - (5 * activeSeconds)
+            );
+
+            // Remaining energy earns bonus points.
+            const energyBonus = this.bananaEnergy * 2;
+
+            // Rescue points were already added
+            // during animal pickup.
+            this.currentScore += timeBonus + energyBonus;
+
+            // Update the final score on the HUD.
+            if (this.scoreText) {
+                this.scoreText.setText(`${this.currentScore}`);
+            }
+
+            console.log('LEVEL SCORE SUMMARY', {
+                rescuedAnimals: this.rescuedCount,
+                rescuePoints: this.rescuedCount * 100,
+                activeSeconds,
+                timeBonus,
+                remainingEnergy: this.bananaEnergy,
+                energyBonus,
+                finalScore: this.currentScore
+            });
+
 
             // Stop the panda's floating animation.
             if (this.floatTween) {
@@ -2501,25 +2552,181 @@ export default class GameplayScene extends Phaser.Scene {
 
             this.successPopup.add(panel);
 
-            // Rescue result
 
-            const resultText = this.add.text(
-                panel.x,
-                panel.y + panel.displayHeight * 0.025,
-                `Animals Rescued: ${this.rescuedCount}/${this.requiredRescues}`,
-                {
-                    fontFamily: 'Arial, sans-serif',
-                    fontSize: `${Math.round(height * 0.022)}px`,
-                    fontStyle: 'bold',
-                    color: '#153b7a',
-                    stroke: '#ffffff',
-                    strokeThickness: 2,
-                    align: 'center'
-                }
+
+            // LEVEL COMPLETED - PLAYER STATISTICS
+
+
+            const panelW = panel.displayWidth;
+            const panelH = panel.displayHeight;
+
+            // Format active gameplay time as MM:SS.
+            const totalSeconds = Math.floor(
+            (this.activePlayMs || 0) / 1000
             );
 
-            resultText.setOrigin(0.5);
-            this.successPopup.add(resultText);
+            const minutes = Math.floor(totalSeconds / 60);
+            const seconds = totalSeconds % 60;
+
+            const timeTaken =
+                `${String(minutes).padStart(2, '0')}:` +
+                `${String(seconds).padStart(2, '0')}`;
+
+            // Real gameplay statistics
+            const statistics = [
+                {
+                    label: 'Final Score',
+                    value: `${this.currentScore}`,
+                    color: 0xf5dc85,
+                    icon: '🏆',
+                    y: -0.050
+                },
+                {
+                    label: 'Animals Rescued',
+                    value: `${this.rescuedCount}/${this.requiredRescues}`,
+                    color: 0xc9f1b7,
+                    icon: '🐵',
+                    y: 0.020
+                },
+                {
+                    label: 'Banana Energy',
+                    value: `${this.bananaEnergy}/100`,
+                    color: 0xaadff9,
+                    icon: '🍌',
+                    y: 0.090
+                },
+                {
+                    label: 'Time Taken',
+                    value: timeTaken,
+                    color: 0xf7b9c0,
+                    icon: '⏱️',
+                    y: 0.160
+                }
+            ];
+
+
+        // ALIGNED STATISTICS POSITIONS
+
+        // Center icons inside the colored squares.
+        const iconX = panel.x - panelW * 0.210;
+
+        // Align all labels consistently.
+        const labelX = panel.x - panelW * 0.150;
+
+        // Move the value badges to the right.
+        const valueX = panel.x + panelW * 0.230;
+
+        const badgeW = panelW * 0.175;
+        const badgeH = panelH * 0.052;
+
+
+        statistics.forEach((row) => {
+
+            const rowY = panel.y + panelH * row.y;
+
+            // Icon
+            const icon = this.add.text(
+                iconX,
+                rowY,
+                row.icon,
+                {
+                    fontFamily: 'Segoe UI Emoji, Arial',
+                    fontSize: `${Math.round(panelH * 0.034)}px`
+                }
+            ).setOrigin(0.5);
+
+            this.successPopup.add(icon);
+
+            // Statistic label
+            const label = this.add.text(
+                labelX,
+                rowY,
+                row.label,
+                {
+                    fontFamily: 'Arial, sans-serif',
+                    fontSize: `${Math.round(panelH * 0.030)}px`,
+                    fontStyle: 'bold',
+                    color: '#173b78'
+                }
+            ).setOrigin(0, 0.5);
+
+            this.successPopup.add(label);
+
+            // Rounded value background
+            const badge = this.add.graphics();
+
+            badge.fillStyle(row.color, 0.98);
+
+            badge.fillRoundedRect(
+                valueX - badgeW / 2,
+                rowY - badgeH / 2,
+                badgeW,
+                badgeH,
+                badgeH / 2
+            );
+
+            this.successPopup.add(badge);
+
+            // Statistic value
+            const value = this.add.text(
+                valueX,
+                rowY,
+                row.value,
+                {
+                    fontFamily: 'Arial, sans-serif',
+                    fontSize: `${Math.round(panelH * 0.028)}px`,
+                    fontStyle: 'bold',
+                    color: '#63340d'
+                }
+            ).setOrigin(0.5);
+
+            this.successPopup.add(value);
+        });
+
+
+
+
+        // LEVEL COMPLETION ACHIEVEMENT
+
+        const allAnimalsRescued =
+            this.rescuedCount === this.requiredRescues &&
+            this.requiredRescues > 0;
+
+        if (allAnimalsRescued) {
+
+            const achievementX = panel.x + panelW * 0.06;
+
+            const achievementTitle = this.add.text(
+                achievementX,
+                panel.y + panelH * 0.265,
+                'New Achievement Unlocked!',
+                {
+                    fontFamily: 'Arial, sans-serif',
+                    fontSize: `${Math.round(panelH * 0.023)}px`,
+                    fontStyle: 'bold',
+                    color: '#17418a'
+                }
+            ).setOrigin(0.5);
+
+            this.successPopup.add(achievementTitle);
+
+            const achievementName = this.add.text(
+                achievementX - panelW * 0.065,
+                panel.y + panelH * 0.310,
+                '🐾 Animal Rescuer',
+                {
+                    fontFamily: 'Arial, sans-serif',
+                    fontSize: `${Math.round(panelH * 0.037)}px`,
+                    fontStyle: 'bold',
+                    color: '#ffda39',
+                    stroke: '#71400d',
+                    strokeThickness: 4
+                }
+            ).setOrigin(0.5);
+
+            this.successPopup.add(achievementName);
+        }
+
 
             // Navigation buttons
 
@@ -3235,6 +3442,14 @@ export default class GameplayScene extends Phaser.Scene {
                     !this.panda || !this.cursors || this.isGamePaused || this.isPuzzleOpen
                 ) {
                     return;
+                }
+
+                // Count only active gameplay time.
+                // Puzzle time, pause time and landing time are excluded.
+                if (
+                    this.gameplayStarted && !this.isLandingSequencePlaying && !this.levelCompleted && !this.isGameOver
+                ) {
+                    this.activePlayMs += delta;
                 }
 
                 const dt = Math.min(delta, 50) / 1000;
