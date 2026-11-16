@@ -9,7 +9,9 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import com.bananaskyrescue.backend.entity.Player;
+import com.bananaskyrescue.backend.entity.PlayerLevelProgress;
 import com.bananaskyrescue.backend.entity.PlayerLevelScore;
+import com.bananaskyrescue.backend.repository.PlayerLevelProgressRepository;
 import com.bananaskyrescue.backend.repository.PlayerLevelScoreRepository;
 import com.bananaskyrescue.backend.repository.PlayerRepository;
 
@@ -19,15 +21,20 @@ public class PlayerLevelScoreService {
     private final PlayerRepository playerRepository;
     private final PlayerLevelScoreRepository scoreRepository;
 
+    // Repository for tracking completed levels.
+    private final PlayerLevelProgressRepository progressRepository;
+
     public PlayerLevelScoreService(
             PlayerRepository playerRepository,
-            PlayerLevelScoreRepository scoreRepository) {
+            PlayerLevelScoreRepository scoreRepository,
+            PlayerLevelProgressRepository progressRepository) {
 
         this.playerRepository = playerRepository;
         this.scoreRepository = scoreRepository;
+        this.progressRepository = progressRepository;
     }
 
-    // SAVE PLAYER'S BEST LEVEL SCORE
+    // SAVE PLAYER'S COMPLETED LEVEL SCORE
 
     @Transactional
     public SavedScore saveLevelScore(
@@ -38,21 +45,28 @@ public class PlayerLevelScoreService {
             int activeSeconds,
             int remainingEnergy) {
 
-        // For now, only Sunny Skies 1/3 is playable.
-        if (mainLevelId != 1 || sublevelId != 1) {
+
+        // Currently supported Sunny Skies sublevels.
+        if (mainLevelId != 1 ||
+                (sublevelId != 1 && sublevelId != 2)) {
+
             throw new ResponseStatusException(
                     HttpStatus.BAD_REQUEST,
                     "Score saving is not enabled for this level"
             );
         }
 
-        // Sunny Skies 1/3 requires one animal rescue.
-        if (rescuedAnimals != 1) {
+        // Required number of rescues for each sublevel.
+        int requiredRescues = sublevelId == 1 ? 1 : 2;
+
+        if (rescuedAnimals != requiredRescues) {
+
             throw new ResponseStatusException(
                     HttpStatus.BAD_REQUEST,
-                    "The required animal rescue is incomplete"
+                    "The required animal rescues are incomplete"
             );
         }
+
 
         // Validate active gameplay duration.
         if (activeSeconds < 0 || activeSeconds > 3600) {
@@ -72,6 +86,7 @@ public class PlayerLevelScoreService {
 
         // CALCULATE SCORE ON THE BACKEND
 
+
         int rescuePoints = rescuedAnimals * 100;
 
         int timeBonus = Math.max(
@@ -84,7 +99,8 @@ public class PlayerLevelScoreService {
         int calculatedScore =
                 rescuePoints + timeBonus + energyBonus;
 
-        // FIND THE AUTHENTICATED PLAYER
+        // FIND AUTHENTICATED PLAYER
+
 
         Player player = playerRepository
                 .findByUsername(username)
@@ -95,22 +111,37 @@ public class PlayerLevelScoreService {
                         )
                 );
 
+
+        // Level 2 must not be submitted before Level 1
+        // has been completed by this player.
+        if (sublevelId == 2 &&
+                !progressRepository
+                    .existsByPlayer_IdAndMainLevelIdAndSublevelId(
+                        player.getId(), 1, 1
+                    )) {
+
+            throw new ResponseStatusException(
+                    HttpStatus.FORBIDDEN,
+                    "Complete Sunny Skies 1/3 first"
+            );
+        }
+
+
         // FIND EXISTING PERSONAL BEST
 
         Optional<PlayerLevelScore> existingScore =
                 scoreRepository
-                .findByPlayer_IdAndMainLevelIdAndSublevelId(
-                        player.getId(),
-                        mainLevelId,
-                        sublevelId
-                );
+                        .findByPlayer_IdAndMainLevelIdAndSublevelId(
+                                player.getId(),
+                                mainLevelId,
+                                sublevelId
+                        );
 
         PlayerLevelScore scoreRecord;
         boolean newPersonalBest;
 
         if (existingScore.isPresent()) {
 
-            // The player has completed this level before.
             scoreRecord = existingScore.get();
 
             newPersonalBest = scoreRecord.updateBestScore(
@@ -122,7 +153,6 @@ public class PlayerLevelScoreService {
 
         } else {
 
-            // First completed score for this level.
             scoreRecord = new PlayerLevelScore(
                     player,
                     mainLevelId,
@@ -136,12 +166,38 @@ public class PlayerLevelScoreService {
             newPersonalBest = true;
         }
 
-        // Save only a first attempt or an improved score.
+        // Only save an initial or improved best score.
         if (newPersonalBest) {
             scoreRepository.save(scoreRecord);
         }
 
-        // RETURN SCORE RESULT
+        // SAVE LEVEL COMPLETION PROGRESS
+
+        // Completion is separate from personal best.
+        // Even a lower-scoring successful replay
+        // should count as a completed level.
+
+        boolean alreadyCompleted =
+                progressRepository
+                        .existsByPlayer_IdAndMainLevelIdAndSublevelId(
+                                player.getId(),
+                                mainLevelId,
+                                sublevelId
+                        );
+
+        if (!alreadyCompleted) {
+
+            PlayerLevelProgress completedLevel =
+                    new PlayerLevelProgress(
+                            player,
+                            mainLevelId,
+                            sublevelId
+                    );
+
+            progressRepository.save(completedLevel);
+        }
+
+        // RETURN SAVED SCORE RESULT
 
         return new SavedScore(
                 mainLevelId,

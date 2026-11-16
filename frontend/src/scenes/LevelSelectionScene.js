@@ -3,6 +3,7 @@ import Phaser from 'phaser';
 import ImageButton from '../components/ImageButton.js';
 import AudioManager from '../components/AudioManager.js';
 import { fetchPlayerProgress } from '../services/playerProgressApi.js';
+import { fetchPlayerProfile } from '../services/playerProfileApi.js';
 
 export default class LevelSelectionScene extends Phaser.Scene {
     constructor() {
@@ -107,6 +108,8 @@ export default class LevelSelectionScene extends Phaser.Scene {
 
         // Points counter
         this.createStarCounter(width, height);
+
+        this.loadTotalPoints();
 
         // Back button
         new ImageButton(
@@ -488,47 +491,103 @@ export default class LevelSelectionScene extends Phaser.Scene {
     // POINTS COUNTER
 
 
-    createStarCounter(width, height) {
-        const x = width * 0.88;
-        const y = height * 0.11;
+        createStarCounter(width, height) {
 
-        const counter = this.add.image(
-            x,
-            y,
-            'levelStarCounter'
-        );
+            const x = width * 0.88;
+            const y = height * 0.11;
 
-        const counterWidth = Math.min(
-            width * 0.15,
-            220
-        );
+            const counter = this.add.image(
+             x,
+             y,
+             'levelStarCounter'
+            );
 
-        counter.setScale(
-            counterWidth / counter.width
-        );
+            const counterWidth = Math.min(
+                width * 0.15,
+                220
+            );
 
-        counter.setDepth(10);
+            counter.setScale(
+                counterWidth / counter.width
+            );
 
-        // Points are separate from completion stars.
-        // This remains temporary until points API integration.
-        const totalPoints = 0;
+            counter.setDepth(10);
 
-        this.add.text(
-            x + counterWidth * 0.13,
-            y,
-            `${totalPoints}`,
-            {
-                fontFamily: 'Arial, sans-serif',
-                fontSize: '20px',
-                fontStyle: 'bold',
-                color: '#ffffff',
-                stroke: '#164b9c',
-                strokeThickness: 3
+            // Keep a reference so the text can update
+            // when the backend sends the player's score.
+            this.totalPointsText = this.add.text(
+                x + counterWidth * 0.13,
+                y,
+                '...',
+                {
+                    fontFamily: 'Arial, sans-serif',
+                    fontSize: '20px',
+                    fontStyle: 'bold',
+                    color: '#ffffff',
+                    stroke: '#164b9c',
+                    strokeThickness: 3
+                }
+            );
+
+            this.totalPointsText
+                .setOrigin(0.5)
+                .setDepth(11);
+        }
+
+        // LOAD TOTAL SCORE FROM BACKEND
+
+        async loadTotalPoints() {
+
+            try {
+
+                const profile = await fetchPlayerProfile();
+
+                // Ignore responses if the scene
+                // was closed while loading.
+                if (
+                    !this.sys.isActive() ||
+                    !this.totalPointsText?.active
+                ) {
+                    return;
+                }
+
+                const totalPoints = Number(
+                    profile.overallScore
+                );
+
+                if (
+                    !Number.isFinite(totalPoints) ||
+                    totalPoints < 0
+                ) {
+                    throw new Error(
+                        'Invalid total score received'
+                    );
+                }
+
+                this.totalPointsText.setText(
+                    totalPoints.toLocaleString('en-US')
+                );
+
+                console.log(
+                    'Player overall score:',
+                    totalPoints
+                );
+
+            } catch (error) {
+
+                console.error(
+                    'Unable to load player total points:',
+                    error
+                );
+
+                if (
+                    this.sys.isActive() &&
+                    this.totalPointsText?.active
+                ) {
+                    this.totalPointsText.setText('--');
+                }
             }
-        )
-        .setOrigin(0.5)
-        .setDepth(11);
-    }
+        }
 
     // MUSIC AND SOUND CONTROLS
 

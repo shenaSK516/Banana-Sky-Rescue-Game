@@ -140,8 +140,17 @@ export default class GameplayScene extends Phaser.Scene {
 
         // Side-scrolling world
 
-        this.worldWidth = width * 4;
+        // Level 2 has a longer journey.
+        const isSunnySkiesLevel2 =
+            Number(this.mainLevelId) === 1 &&
+            Number(this.sublevelId) === 2;
+
+        this.worldWidth = width * (
+            isSunnySkiesLevel2 ? 4.8 : 4
+        );
+
         this.worldHeight = height;
+
 
         this.cameras.main.setBackgroundColor('#87CEEB');
 
@@ -154,15 +163,34 @@ export default class GameplayScene extends Phaser.Scene {
 
         //Gameplay islands
 
+
+
+        // CREATE GAMEPLAY WORLD
+
         this.createGameplayIslands();
 
-        this.createRescueMonkey();
 
+        // CREATE RESCUE ANIMALS
+
+        if (
+            Number(this.mainLevelId) === 1 &&
+            Number(this.sublevelId) === 2
+        ) {
+            // Sunny Skies 2/3: Monkey + Elephant.
+            this.requiredRescues = 2;
+            this.createLevel2RescueAnimals();
+
+        } else {
+            // Sunny Skies 1/3: Original Monkey.
+            this.requiredRescues = 1;
+            this.createRescueMonkey();
+        }
+
+        // Create each system only ONCE.
         this.createRescueHUD();
-
         this.createBirdObstacles();
-
         this.createGoldenBanana();
+
 
         //SUNNY SKIES BACKGROUND
 
@@ -440,23 +468,34 @@ export default class GameplayScene extends Phaser.Scene {
 
 
 
+
     createGoldenBanana() {
 
-        // Only for Sunny Skies 1/3
+        // Enable Golden Banana for Sunny Skies
+        // Level 1/3 and Level 2/3.
+        const mainLevel = Number(this.mainLevelId);
+        const sublevel = Number(this.sublevelId);
+
         if (
-            Number(this.mainLevelId) !== 1 ||
-            Number(this.sublevelId) !== 1
+            mainLevel !== 1 ||
+            ![1, 2].includes(sublevel)
         ) {
             return;
         }
 
         const { width, height } = this.scale;
 
-        // Golden Banana position
-        const bananaX = width * 1.83;
-        const bananaY = height * 0.63;
+        // Different Golden Banana position for each level.
+        const bananaX = width * (
+            sublevel === 2 ? 2.20 : 1.83
+        );
 
-        // Create a container to hold banana + glow dots
+        const bananaY = height * (
+            sublevel === 2 ? 0.62 : 0.63
+        );
+
+
+        // container to hold banana + glow dots
         this.goldenBananaContainer = this.add.container(bananaX, bananaY);
 
         // Banana image
@@ -1141,75 +1180,154 @@ export default class GameplayScene extends Phaser.Scene {
 
          // CREATE GAMEPLAY ISLANDS
 
-        createGameplayIslands() {
-            const { width, height } = this.scale;
 
-            if (
-                Number(this.mainLevelId) !== 1 || Number(this.sublevelId) !== 1
-            ) {
-                return;
+
+    createGameplayIslands() {
+
+        const { width, height } = this.scale;
+
+        const mainLevel = Number(this.mainLevelId);
+        const sublevel = Number(this.sublevelId);
+
+        // Only create implemented Sunny Skies layouts.
+        if (
+            mainLevel !== 1 ||
+            ![1, 2].includes(sublevel)
+        ) {
+            return;
+        }
+
+        const isLevel2 = sublevel === 2;
+
+        // SUNNY SKIES LEVEL 1
+        // Original layout preserved.
+
+        const level1Layout = [
+            {
+                key: 'floatingIsland',
+                x: width * 0.90,
+                y: height * 0.76,
+                size: 0.22,
+                moving: true,
+                speed: 75
+            },
+            {
+                key: 'animalRescueIsland',
+                x: width * 1.48,
+                y: height * 0.75,
+                size: 0.20,
+                moving: false
+            },
+            {
+                key: 'obstacleIsland1',
+                x: width * 2.15,
+                y: height * 0.30,
+                size: 0.20,
+                moving: false
+            },
+            {
+                key: 'floatingIsland',
+                x: width * 2.67,
+                y: height * 0.75,
+                size: 0.21,
+             moving: true,
+             speed: 95
+            },
+            {
+                key: 'obstacleIsland2',
+                x: width * 3.14,
+                y: height * 0.30,
+                size: 0.20,
+                moving: false
             }
+        ];
 
-        // Smaller islands for Sunny Skies 1/3.
-        // Moving islands:
-        // floatingIsland
-        // Stationary islands:
-        //   animalRescueIsland
-        //   obstacleIsland1
-        //   obstacleIsland2
+        // SUNNY SKIES LEVEL 2
+        // Double Rescue Mission.
 
-            const islandLayout = [
-                {
-                    key: 'floatingIsland',
-                    x: width * 0.90,
-                    y: height * 0.76,
-                    size: 0.22,
-                    moving: true,
-                    speed: 75
-                },
-                {
-                    key: 'animalRescueIsland',
-                    x: width * 1.48,
-                    y: height * 0.75,
-                    size: 0.20,
-                    moving: false
-                },
-                {
-                    key: 'obstacleIsland1',
-                    x: width * 2.15,
-                    y: height * 0.30,
-                    size: 0.20,
-                    moving: false
-                },
-                {
-                    key: 'floatingIsland',
-                    x: width * 2.67,
-                    y: height * 0.75,
-                    size: 0.21,
-                    moving: true,
-                    speed: 95
-                },
-                {
-                    key: 'obstacleIsland2',
-                    x: width * 3.14,
-                    y: height * 0.30,
-                    size: 0.20,
-                    moving: false
-                }
-            ];
+        const level2Layout = [
+            {
+                key: 'floatingIsland',
+                x: width * 0.85,
+                y: height * 0.76,
+                size: 0.20,
+                moving: true,
+                speed: 90
+            },
+            {
+                key: 'animalRescueIsland',
+                x: width * 1.35,
+                y: height * 0.75,
+                size: 0.21,
+                moving: false,
+                rescueAnimal: 'monkey'
+            },
+            {
+                key: 'obstacleIsland1',
+                x: width * 1.90,
+                y: height * 0.30,
+                size: 0.19,
+                moving: false
+            },
+            {
+                key: 'floatingIsland',
+                x: width * 2.50,
+                y: height * 0.76,
+                size: 0.20,
+                moving: true,
+                speed: 105
+            },
+            {
+                key: 'animalRescueIsland',
+                x: width * 3.10,
+                y: height * 0.74,
+                size: 0.22,
+                moving: false,
+                rescueAnimal: 'elephant'
+            },
+            {
+                key: 'obstacleIsland2',
+                x: width * 3.55,
+                y: height * 0.30,
+                size: 0.19,
+                moving: false
+            },
+            {
+                key: 'floatingIsland',
+                x: width * 3.95,
+                y: height * 0.77,
+                size: 0.20,
+                moving: true,
+                speed: 110
+            }
+        ];
 
-            this.gameplayIslands = [];
-            this.blockingIslands = [];
-            this.movingIslands = [];
+        const islandLayout = isLevel2
+            ? level2Layout
+            : level1Layout;
 
-            for (const islandData of islandLayout) {
-                if (!this.textures.exists(islandData.key)) {
-                    console.warn(
-                        'Missing island texture:',
-                        islandData.key
-                    );
-                    continue;
-                }
+        // RESET ISLAND COLLECTIONS
+
+        this.gameplayIslands = [];
+        this.blockingIslands = [];
+        this.movingIslands = [];
+
+        // Store rescue islands for the next step.
+        this.rescueIslands = [];
+
+        // CREATE FLOATING ISLANDS
+
+        for (const islandData of islandLayout) {
+
+            if (!this.textures.exists(islandData.key)) {
+
+                console.warn(
+                    'Missing island texture:',
+                    islandData.key
+                );
+
+                continue;
+            }
 
             const island = this.add.image(
                 islandData.x,
@@ -1227,11 +1345,20 @@ export default class GameplayScene extends Phaser.Scene {
             island.setDepth(5);
 
             this.gameplayIslands.push(island);
-
-            // All islands above are blocking.
             this.blockingIslands.push(island);
 
+            // Record the island assigned to an animal.
+            if (islandData.rescueAnimal) {
+
+                this.rescueIslands.push({
+                    animalType: islandData.rescueAnimal,
+                    sprite: island
+                });
+            }
+
+            // Register moving islands.
             if (islandData.moving) {
+
                 this.movingIslands.push({
                     sprite: island,
                     speed: islandData.speed,
@@ -1241,60 +1368,81 @@ export default class GameplayScene extends Phaser.Scene {
             }
         }
 
-        // SAFE ISLAND
 
-        const safeIslandKey = 'safeIsland_1_1';
+
+        // CREATE SAFE ISLAND
+
+        // Reuse the isLevel2 variable declared
+        // at the beginning of this method.
+
+        const safeIslandKey = isLevel2
+           ? 'safeIsland_1_2'
+           : 'safeIsland_1_1';
+
+
 
         if (this.textures.exists(safeIslandKey)) {
+
             this.safeIsland = this.add.image(
-                this.worldWidth - width * 0.25,
+                this.worldWidth - width * (
+                    isLevel2 ? 0.30 : 0.25
+                ),
                 height * 0.53,
                 safeIslandKey
             );
 
-            this.safeIsland.setScale(
-                (width * 0.45) / this.safeIsland.width
-            );
 
-            this.safeIsland.setDepth(5);
 
-            this.gameplayIslands.push(
-                this.safeIsland
-            );
+        const safeIslandWidth =
+            width * (isLevel2 ? 0.56 : 0.45);
 
-            // The Safe Island is intentionally
-            // NOT added to blockingIslands.
+        this.safeIsland.setScale(
+            safeIslandWidth / this.safeIsland.width
+        );
 
-            if (this.textures.exists('safeIslandSign')) {
-                this.safeIslandSign = this.add.image(
+
+
+        this.safeIsland.setDepth(5);
+
+        this.gameplayIslands.push(
+            this.safeIsland
+        );
+
+        // Safe Island is not a blocking obstacle.
+
+        if (this.textures.exists('safeIslandSign')) {
+
+            this.safeIslandSign = this.add.image(
                 this.safeIsland.x - width * 0.32,
                 height * 0.30,
                 'safeIslandSign'
             );
 
-                this.safeIslandSign.setScale(
-                    (width * 0.10) /
-                    this.safeIslandSign.width
-                );
+            this.safeIslandSign.setScale(
+                (width * 0.10) /
+                this.safeIslandSign.width
+            );
 
-                this.safeIslandSign.setDepth(6);
+            this.safeIslandSign.setDepth(6);
 
-                this.gameplayIslands.push(
-                    this.safeIslandSign
-                );
-            }
+            this.gameplayIslands.push(
+                this.safeIslandSign
+            );
         }
-
-        console.log(
-            'Gameplay islands:',
-            this.gameplayIslands.length
-        );
-
-        console.log(
-            'Moving islands:',
-            this.movingIslands.length
-        );
     }
+
+    console.log(
+        `Sunny Skies ${sublevel}/3 islands created:`,
+        {
+            totalIslands: this.gameplayIslands.length,
+            movingIslands: this.movingIslands.length,
+            rescueIslands: this.rescueIslands.length,
+            worldWidth: this.worldWidth
+        }
+    );
+}
+
+
 
         // COLLISION RECTANGLES
 
@@ -1633,49 +1781,205 @@ export default class GameplayScene extends Phaser.Scene {
 
 
 
-        createBirdObstacles() {
+    // SUNNY SKIES LEVEL 2
+    // MONKEY AND BABY ELEPHANT RESCUE
+
+    createLevel2RescueAnimals() {
+
+        const { width } = this.scale;
+
+        // Animal configurations for Level 2.
+        const animalConfigs = [
+            {
+                id: 'monkey-2',
+                type: 'monkey',
+                texture: 'monkeyWorried',
+                happyFaceKey: 'monkeyHappyFace',
+                widthRatio: 0.070
+            },
+            {
+                id: 'elephant-1',
+                type: 'elephant',
+                texture: 'elephantWorried',
+                happyFaceKey: 'elephantHappyFace',
+                widthRatio: 0.070
+            }
+        ];
+
+        for (const config of animalConfigs) {
+
+            // Find the assigned rescue island.
+            const rescueIslandData =
+                this.rescueIslands?.find(
+                    item => item.animalType === config.type
+                );
+
+            if (!rescueIslandData) {
+                console.error(
+                    `Rescue island missing for ${config.type}`
+                );
+                continue;
+            }
+
             if (
-                Number(this.mainLevelId) !== 1 ||
-                Number(this.sublevelId) !== 1
+                !this.textures.exists(config.texture) ||
+                !this.textures.exists(config.happyFaceKey)
             ) {
-                return;
+                console.error(
+                    `Missing animal textures for ${config.type}`
+                );
+                continue;
             }
 
-            if (!this.textures.exists('blackBird')) {
-                console.warn('Black bird texture is missing');
-             return;
-            }
+            const island = rescueIslandData.sprite;
 
-            const { width, height } = this.scale;
+            // WORRIED ANIMAL ON THE ISLAND
 
-            // Two birds positioned along the journey.
-            const birdPositions = [
-                { x: width * 1.90, y: height * 0.42 },
-                { x: width * 2.85, y: height * 0.55 }
-            ];
+            const animal = this.add.image(
+                island.x,
+                island.y -
+                    island.displayHeight * 0.10,
+                config.texture
+            );
 
-                this.birdObstacles = birdPositions.map(position => {
-                const bird = this.add.image(
-                    position.x,
-                    position.y,
-                    'blackBird'
-                );
+            animal.setOrigin(0.5, 1);
 
-                bird.setDisplaySize(
-                    width * 0.055,
-                    width * 0.045
-                );
+            animal.setScale(
+                (width * config.widthRatio) /
+                animal.width
+            );
 
-                bird.setDepth(15);
+            animal.setDepth(12);
 
-                return {
-                    sprite: bird,
-                    speed: 120,
-                    active: false,
-                    finished: false
-                };
+            // HELP SPEECH BUBBLE
+
+            const helpBubble = this.add.image(
+                animal.x +
+                    animal.displayWidth * 0.60,
+                animal.y -
+                    animal.displayHeight * 1.05,
+                'animalHelpBubble'
+            );
+
+            helpBubble.setScale(
+                (width * 0.10) /
+                helpBubble.width
+            );
+
+            helpBubble.setDepth(13);
+
+            // PRESS E TO RESCUE PROMPT
+
+            const rescuePrompt = this.add.image(
+                animal.x,
+                animal.y -
+                    animal.displayHeight * 1.55,
+                'animalRescuePrompt'
+            );
+
+            rescuePrompt.setScale(
+                (width * 0.18) /
+                rescuePrompt.width
+            );
+
+            rescuePrompt.setDepth(30);
+            rescuePrompt.setVisible(false);
+
+            // REGISTER THE ANIMAL
+
+            this.rescueAnimals.push({
+                id: config.id,
+                type: config.type,
+
+                sprite: animal,
+                helpBubble: helpBubble,
+                prompt: rescuePrompt,
+
+                happyFaceKey: config.happyFaceKey,
+
+                rescued: false,
+                carriedFace: null
             });
+
+            console.log(
+                `Level 2 rescue animal created: ${config.type}`
+            );
         }
+
+        console.log(
+            'Level 2 rescue animals:',
+            this.rescueAnimals.length
+        );
+    }
+
+
+
+
+
+    createBirdObstacles() {
+
+        const mainLevel = Number(this.mainLevelId);
+        const sublevel = Number(this.sublevelId);
+
+        // Only implemented Sunny Skies sublevels.
+        if (
+            mainLevel !== 1 ||
+            ![1, 2].includes(sublevel)
+        ) {
+            return;
+        }
+
+        if (!this.textures.exists('blackBird')) {
+            console.warn('Black bird texture is missing');
+            return;
+        }
+
+        const { width, height } = this.scale;
+
+        // Level 1 keeps its two original birds.
+        const level1Birds = [
+            { x: 1.90, y: 0.42, speed: 120 },
+            { x: 2.85, y: 0.55, speed: 120 }
+        ];
+
+        // Level 2 has three faster birds.
+        const level2Birds = [
+            { x: 1.90, y: 0.42, speed: 135 },
+            { x: 2.80, y: 0.53, speed: 145 },
+            { x: 3.75, y: 0.41, speed: 150 }
+        ];
+
+        const birdPositions =
+            sublevel === 2 ? level2Birds : level1Birds;
+
+        this.birdObstacles = birdPositions.map(config => {
+
+            const bird = this.add.image(
+                width * config.x,
+                height * config.y,
+                'blackBird'
+            );
+
+            bird.setDisplaySize(
+                width * 0.055,
+                width * 0.045
+            );
+
+            bird.setDepth(15);
+
+            return {
+                sprite: bird,
+                speed: config.speed,
+                active: false,
+                finished: false
+            };
+        });
+
+        console.log(
+            `Sunny Skies ${sublevel}/3 birds created:`,
+            this.birdObstacles.length
+        );
+    }
 
 
 
@@ -1907,7 +2211,10 @@ export default class GameplayScene extends Phaser.Scene {
             );
 
             // Small enough to fit inside the basket.
-            const targetWidth = this.pandaWidth * 0.27;
+            const targetWidth =
+                this.requiredRescues > 1
+                    ? this.pandaWidth * 0.27
+                    : this.pandaWidth * 0.27;
 
             happyFace.setScale(
                 targetWidth / happyFace.width
@@ -1992,8 +2299,11 @@ export default class GameplayScene extends Phaser.Scene {
                     // inside the balloon basket.
                     const faceX =
                         basket.x +
-                        this.pandaWidth * 0.17 +
-                        index * this.pandaWidth * 0.12;
+                        this.pandaWidth * (
+                            this.requiredRescues > 1
+                                ? 0.02 + index * 0.25
+                                : 0.17
+                        );
 
                     const faceY =
                         basket.y -
@@ -2010,9 +2320,10 @@ export default class GameplayScene extends Phaser.Scene {
 
         checkSafeIslandLanding() {
             // Only Sunny Skies 1/3 for now.
+
+            // Enable landing for Sunny Skies 1/3 and 2/3.
             if (
-                Number(this.mainLevelId) !== 1 ||
-                Number(this.sublevelId) !== 1
+                Number(this.mainLevelId) !== 1 || ![1, 2].includes(Number(this.sublevelId))
             ) {
                 return;
             }
@@ -2033,13 +2344,22 @@ export default class GameplayScene extends Phaser.Scene {
 
             // Approximate paw-print landing position
             // relative to the Safe Island.
+
+            const isLevel2 =
+                Number(this.sublevelId) === 2;
+
+            // The Level 2 paw-print area is positioned
+            // differently from the original Safe Island.
             const landingX =
-                this.safeIsland.x -
-                this.safeIsland.displayWidth * 0.05;
+                this.safeIsland.x +
+                this.safeIsland.displayWidth *
+                (isLevel2 ? -0.02 : -0.05);
 
             const landingY =
-                this.safeIsland.y -
-                this.safeIsland.displayHeight * 0.08;
+                this.safeIsland.y +
+                this.safeIsland.displayHeight *
+                (isLevel2 ? -0.12 : -0.08);
+
 
             // Use the existing balloon basket position,
             // not the center of the full panda image.
@@ -2252,47 +2572,87 @@ export default class GameplayScene extends Phaser.Scene {
             );
 
             // Hide the happy monkey face from the basket.
-            const monkey = this.rescueAnimals.find(
-                animal => animal.id === 'monkey-1'
+
+            // DELIVER ALL RESCUED ANIMALS
+
+            this.deliveredAnimals = [];
+
+            const isLevel2 =
+                Number(this.mainLevelId) === 1 &&
+                Number(this.sublevelId) === 2;
+
+            const rescuedAnimals =
+                this.rescueAnimals.filter(
+                    animal => animal.rescued
+                );
+
+            rescuedAnimals.forEach((animal, index) => {
+
+                // Remove the animal's face from the basket.
+                if (animal.carriedFace) {
+                    animal.carriedFace.setVisible(false);
+                }
+
+                // Select the correct sitting animal.
+                const safeTexture =
+                    animal.type === 'elephant'
+                        ? 'elephantSafe'
+                        : 'monkeySafe';
+
+                if (!this.textures.exists(safeTexture)) {
+                    console.warn(
+                        'Missing safe animal texture:',
+                        safeTexture
+                    );
+                    return;
+                }
+
+                // Position animals beside each other
+                // on the Level 2 Safe Island.
+                const xOffset = isLevel2
+                    ? (index === 0 ? -0.16 : 0.14)
+                    : -0.24;
+
+                const yOffset = isLevel2
+                    ? 0.065
+                    : -0.04;
+
+                const deliveredSprite = this.add.image(
+                    this.safeIsland.x +
+                        this.safeIsland.displayWidth * xOffset,
+                    this.safeIsland.y +
+                        this.safeIsland.displayHeight * yOffset,
+                    safeTexture
+                );
+
+                // Scale animals relative to the island.
+                const sizeRatio = isLevel2
+                    ? (animal.type === 'elephant'
+                        ? 0.14
+                        : 0.12)
+                    : 0.13;
+
+                deliveredSprite.setScale(
+                    (this.safeIsland.displayWidth * sizeRatio) /
+                    deliveredSprite.width
+                );
+
+                // Anchor at the animal's feet.
+                deliveredSprite.setOrigin(0.5, 1);
+                deliveredSprite.setDepth(22);
+
+                this.deliveredAnimals.push(deliveredSprite);
+
+                console.log(
+                    `${animal.type} safely delivered!`
+                );
+            });
+
+            console.log(
+                `Sunny Skies ${this.sublevelId}/3: ` +
+                `${this.deliveredAnimals.length} animals delivered`
             );
 
-            if (monkey?.carriedFace) {
-                monkey.carriedFace.setVisible(false);
-            }
-
-            // Show the happy sitting monkey on the Safe Island
-            if (
-                this.safeIsland &&
-                this.textures.exists('monkeySafe')
-            ) {
-                this.deliveredMonkey = this.add.image(
-                    this.safeIsland.x -
-                        this.safeIsland.displayWidth * 0.24,
-                    this.safeIsland.y -
-                        this.safeIsland.displayHeight * 0.04,
-                    'monkeySafe'
-                );
-
-                // Scale relative to the Safe Island.
-                const monkeyWidth =
-                    this.safeIsland.displayWidth * 0.13;
-
-                this.deliveredMonkey.setScale(
-                    monkeyWidth / this.deliveredMonkey.width
-                );
-
-                // Position based on the monkey's feet.
-                this.deliveredMonkey.setOrigin(0.5, 1);
-                this.deliveredMonkey.setDepth(22);
-            }
-
-                console.log(
-                    'Monkey safely delivered to Safe Island!'
-                );
-
-                console.log(
-                    'Sunny Skies 1/3 rescue delivery complete!'
-                );
 
 
                 // Play completion sound once.

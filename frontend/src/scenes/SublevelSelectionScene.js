@@ -3,6 +3,7 @@ import Phaser from 'phaser';
 import ImageButton from '../components/ImageButton.js';
 import AudioManager from '../components/AudioManager.js';
 import { fetchPlayerProgress } from '../services/playerProgressApi.js';
+import { fetchPlayerProfile } from '../services/playerProfileApi.js';
 
 export default class SublevelSelectionScene extends Phaser.Scene {
 
@@ -120,9 +121,7 @@ export default class SublevelSelectionScene extends Phaser.Scene {
 
         const level = this.currentLevel;
 
-        // ========================================
         // BACKGROUND
-        // ========================================
 
         const background = this.add.image(
             width / 2,
@@ -137,9 +136,7 @@ export default class SublevelSelectionScene extends Phaser.Scene {
             )
         );
 
-        // ========================================
         // LEVEL BANNER
-        // ========================================
 
         const banner = this.add.image(
             width / 2,
@@ -199,6 +196,8 @@ export default class SublevelSelectionScene extends Phaser.Scene {
 
         this.createPlayerNameplate(width, height);
         this.createStarCounter(width, height);
+
+        this.loadTotalPoints();
 
         // BACK BUTTON
 
@@ -514,7 +513,11 @@ export default class SublevelSelectionScene extends Phaser.Scene {
 
     // POINTS COUNTER
 
+
+    // PLAYER TOTAL POINTS COUNTER
+
     createStarCounter(width, height) {
+
         const x = width * 0.88;
         const y = height * 0.11;
 
@@ -529,17 +532,18 @@ export default class SublevelSelectionScene extends Phaser.Scene {
             220
         );
 
-        counter
-            .setScale(counterWidth / counter.width)
-            .setDepth(10);
+        counter.setScale(
+            counterWidth / counter.width
+        );
 
-        // Points system will be integrated later.
-        const totalPoints = 0;
+        counter.setDepth(10);
 
-        this.add.text(
+        // Keep a reference so the text can update
+        // when the backend sends the player's score.
+        this.totalPointsText = this.add.text(
             x + counterWidth * 0.13,
             y,
-            `${totalPoints}`,
+            '...',
             {
                 fontFamily: 'Arial, sans-serif',
                 fontSize: '20px',
@@ -548,9 +552,65 @@ export default class SublevelSelectionScene extends Phaser.Scene {
                 stroke: '#164b9c',
                 strokeThickness: 3
             }
-        )
-        .setOrigin(0.5)
-        .setDepth(11);
+        );
+
+        this.totalPointsText
+            .setOrigin(0.5)
+            .setDepth(11);
+    }
+
+    // LOAD TOTAL SCORE FROM BACKEND
+    async loadTotalPoints() {
+
+        try {
+
+            const profile = await fetchPlayerProfile();
+
+            // Ignore responses if the scene
+            // was closed while loading.
+            if (
+                !this.sys.isActive() ||
+                !this.totalPointsText?.active
+            ) {
+                return;
+            }
+
+            const totalPoints = Number(
+                profile.overallScore
+            );
+
+            if (
+                !Number.isFinite(totalPoints) ||
+                totalPoints < 0
+            ) {
+                throw new Error(
+                    'Invalid total score received'
+                );
+            }
+
+            this.totalPointsText.setText(
+                totalPoints.toLocaleString('en-US')
+            );
+
+            console.log(
+                'Player overall score:',
+                totalPoints
+            );
+
+        } catch (error) {
+
+            console.error(
+                'Unable to load player total points:',
+                error
+            );
+
+            if (
+                this.sys.isActive() &&
+                this.totalPointsText?.active
+            ) {
+                this.totalPointsText.setText('--');
+            }
+        }
     }
 
     // MUSIC AND SOUND CONTROLS

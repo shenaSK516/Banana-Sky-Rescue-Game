@@ -372,6 +372,12 @@ export default class BootScene extends Phaser.Scene {
             '/assets/gameplay/islands/safe-islands/sunny-1.png'
         );
 
+        // Sunny Skies 2/3 - Safe Island
+        this.load.image(
+            'safeIsland_1_2',
+            '/assets/gameplay/islands/safe-islands/sunny-2.png'
+        );
+
         /*ANIMAL RESCUE ASSETS
         Sunny Skies - Sublevel 1*/
 
@@ -396,6 +402,26 @@ export default class BootScene extends Phaser.Scene {
             'monkeySafe',
             '/assets/gameplay/animals/monkey/monkey-safe.png'
         );
+
+
+        //BABY ELEPHANT
+
+        this.load.image(
+            'elephantWorried',
+            '/assets/gameplay/animals/elephant/elephant-worried.png'
+        );
+
+        this.load.image(
+            'elephantHappyFace',
+            '/assets/gameplay/animals/elephant/elephant-happy-face.png'
+        );
+
+        this.load.image(
+            'elephantSafe',
+            '/assets/gameplay/animals/elephant/elephant-safe.png'
+        );
+
+
 
         this.load.image(
             'blackBird',
