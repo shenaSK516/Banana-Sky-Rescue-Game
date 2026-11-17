@@ -423,6 +423,27 @@ export default class BootScene extends Phaser.Scene {
 
 
 
+        // ==========================================
+        // SUNNY SKIES LEVEL 3: BUNNY ASSETS
+        // ==========================================
+
+        this.load.image(
+            'bunnyWorried',
+            '/assets/gameplay/animals/bunny/bunny-worried.png'
+        );
+
+        this.load.image(
+            'bunnyHappyFace',
+            '/assets/gameplay/animals/bunny/bunny-happy-face.png'
+        );
+
+        this.load.image(
+            'bunnySafe',
+            '/assets/gameplay/animals/bunny/bunny-safe.png'
+        );
+
+
+
         this.load.image(
             'blackBird',
             '/assets/gameplay/obstacles/black-bird.png'
@@ -449,6 +470,12 @@ export default class BootScene extends Phaser.Scene {
         this.load.audio(
             'levelCompleteSound',
             '/assets/audio/level-complete.mp3'
+        );
+
+        // Sunny Skies Level 3 Safe Island
+        this.load.image(
+            'safeIsland_1_3',
+            '/assets/gameplay/islands/safe-islands/sunny-3.png'
         );
 
         // GAMEPLAY HUD ASSETS

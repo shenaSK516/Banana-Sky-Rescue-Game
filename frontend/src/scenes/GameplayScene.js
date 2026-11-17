@@ -145,8 +145,12 @@ export default class GameplayScene extends Phaser.Scene {
             Number(this.mainLevelId) === 1 &&
             Number(this.sublevelId) === 2;
 
+        // World length based on Sunny Skies sublevel.
+        const currentSublevel = Number(this.sublevelId);
+
         this.worldWidth = width * (
-            isSunnySkiesLevel2 ? 4.8 : 4
+            currentSublevel === 3 ? 5.8 :
+            currentSublevel === 2 ? 4.8 : 4
         );
 
         this.worldHeight = height;
@@ -170,21 +174,32 @@ export default class GameplayScene extends Phaser.Scene {
         this.createGameplayIslands();
 
 
-        // CREATE RESCUE ANIMALS
+
+        // ==========================================
+        // CREATE RESCUE ANIMALS FOR SUNNY SKIES
+        // ==========================================
+
+        const currentMainLevel = Number(this.mainLevelId);
 
         if (
-            Number(this.mainLevelId) === 1 &&
-            Number(this.sublevelId) === 2
+            currentMainLevel === 1 &&
+            [2, 3].includes(currentSublevel)
         ) {
-            // Sunny Skies 2/3: Monkey + Elephant.
-            this.requiredRescues = 2;
-            this.createLevel2RescueAnimals();
+
+            // Level 2: Monkey + Elephant
+            // Level 3: Monkey + Elephant + Bunny
+            this.requiredRescues =
+                currentSublevel === 3 ? 3 : 2;
+
+            this.createMultiRescueAnimals();
 
         } else {
-            // Sunny Skies 1/3: Original Monkey.
+
+            // Preserve original Level 1 behavior.
             this.requiredRescues = 1;
             this.createRescueMonkey();
         }
+
 
         // Create each system only ONCE.
         this.createRescueHUD();
@@ -478,21 +493,26 @@ export default class GameplayScene extends Phaser.Scene {
 
         if (
             mainLevel !== 1 ||
-            ![1, 2].includes(sublevel)
+            ![1, 2,3].includes(sublevel)
         ) {
             return;
         }
 
         const { width, height } = this.scale;
 
-        // Different Golden Banana position for each level.
+
+        // GOLDEN BANANA POSITION BY SUBLEVEL
+
         const bananaX = width * (
+            sublevel === 3 ? 3.45 :
             sublevel === 2 ? 2.20 : 1.83
         );
 
         const bananaY = height * (
+            sublevel === 3 ? 0.57 :
             sublevel === 2 ? 0.62 : 0.63
         );
+
 
 
         // container to hold banana + glow dots
@@ -651,20 +671,22 @@ export default class GameplayScene extends Phaser.Scene {
         this.time.paused = true;
         this.tweens.pauseAll();
 
+
         const { width, height } = this.scale;
-        const camera = this.cameras.main;
+
+        // CENTER BANANA PUZZLE ON THE SCREEN
 
 
-        // Pause and Game Over popups
-        const popup = this.add.container(
-            camera.scrollX,
-            camera.scrollY
-        );
+        const popup = this.add.container(0, 0);
 
-        popup.setScrollFactor(1);
+        // Keep popup fixed in the visible screen.
+        popup.setScrollFactor(0);
+
+        // Display above gameplay objects.
         popup.setDepth(4000);
 
         this.bananaPuzzlePopup = popup;
+
 
         // Dark overlay
         const shade = this.add.rectangle(
@@ -759,11 +781,18 @@ export default class GameplayScene extends Phaser.Scene {
             }
         ).setOrigin(0.5);
 
+
+        // Keep the Submit button's input position
+        // aligned with the fixed popup.
+
+        submitButton.setScrollFactor(0);
+
         submitButton.setInteractive({
             useHandCursor: true
         });
 
         popup.add(submitButton);
+
 
 
         // BANANA API FAILURE RECOVERY
@@ -809,6 +838,8 @@ export default class GameplayScene extends Phaser.Scene {
                 }
             ).setOrigin(0.5);
 
+            recoveryButton.setScrollFactor(0);
+
             recoveryButton.setInteractive({
                 useHandCursor: true
             });
@@ -843,6 +874,8 @@ export default class GameplayScene extends Phaser.Scene {
         let answerAlreadySubmitted = false;
 
         submitButton.on('pointerdown', async () => {
+
+            console.log('SUBMIT BUTTON CLICK DETECTED!');
 
             // Prevent duplicate submissions
             if (
@@ -947,6 +980,7 @@ export default class GameplayScene extends Phaser.Scene {
         );
 
         continueButton.setScale(continueScale);
+        continueButton.setScrollFactor(0);
 
         continueButton.setInteractive({
             useHandCursor: true
@@ -1192,15 +1226,15 @@ export default class GameplayScene extends Phaser.Scene {
         // Only create implemented Sunny Skies layouts.
         if (
             mainLevel !== 1 ||
-            ![1, 2].includes(sublevel)
+            ![1, 2, 3].includes(sublevel)
         ) {
             return;
         }
 
         const isLevel2 = sublevel === 2;
+        const isLevel3 = sublevel === 3;
 
         // SUNNY SKIES LEVEL 1
-        // Original layout preserved.
 
         const level1Layout = [
             {
@@ -1243,7 +1277,6 @@ export default class GameplayScene extends Phaser.Scene {
         ];
 
         // SUNNY SKIES LEVEL 2
-        // Double Rescue Mission.
 
         const level2Layout = [
             {
@@ -1302,9 +1335,98 @@ export default class GameplayScene extends Phaser.Scene {
             }
         ];
 
-        const islandLayout = isLevel2
-            ? level2Layout
-            : level1Layout;
+
+        // SUNNY SKIES LEVEL 3
+
+        const level3Layout = [
+            {
+                key: 'floatingIsland',
+                x: width * 0.80,
+                y: height * 0.76,
+                size: 0.20,
+                moving: true,
+                speed: 95
+            },
+            {
+                key: 'animalRescueIsland',
+                x: width * 1.30,
+                y: height * 0.75,
+                size: 0.21,
+                moving: false,
+                rescueAnimal: 'monkey'
+            },
+            {
+                key: 'obstacleIsland1',
+                x: width * 1.80,
+                y: height * 0.30,
+                size: 0.19,
+                moving: false
+            },
+            {
+                key: 'floatingIsland',
+                x: width * 2.25,
+                y: height * 0.76,
+                size: 0.20,
+                moving: true,
+                speed: 110
+            },
+            {
+                key: 'animalRescueIsland',
+                x: width * 2.75,
+                y: height * 0.74,
+                size: 0.22,
+                moving: false,
+                rescueAnimal: 'elephant'
+            },
+            {
+                key: 'obstacleIsland2',
+                x: width * 3.20,
+                y: height * 0.30,
+                size: 0.19,
+                moving: false
+            },
+            {
+                key: 'floatingIsland',
+                x: width * 3.65,
+                y: height * 0.77,
+                size: 0.20,
+                moving: true,
+                speed: 120
+            },
+            {
+                key: 'animalRescueIsland',
+                x: width * 4.25,
+                y: height * 0.75,
+                size: 0.21,
+                moving: false,
+                rescueAnimal: 'bunny'
+            },
+            {
+                key: 'obstacleIsland1',
+                x: width * 4.70,
+                y: height * 0.30,
+                size: 0.19,
+                moving: false
+            },
+            {
+                key: 'floatingIsland',
+                x: width * 4.95,
+                y: height * 0.76,
+                size: 0.20,
+                moving: true,
+                speed: 125
+            }
+        ];
+
+
+
+        // Choose the island layout for each sublevel.
+        const islandLayout = isLevel3
+            ? level3Layout
+            : isLevel2
+                ? level2Layout
+                : level1Layout;
+
 
         // RESET ISLAND COLLECTIONS
 
@@ -1372,19 +1494,20 @@ export default class GameplayScene extends Phaser.Scene {
 
         // CREATE SAFE ISLAND
 
-        // Reuse the isLevel2 variable declared
-        // at the beginning of this method.
 
-        const safeIslandKey = isLevel2
-           ? 'safeIsland_1_2'
-           : 'safeIsland_1_1';
+        // Safe Island artwork for each sublevel
+        const safeIslandKey = isLevel3
+            ? 'safeIsland_1_3'
+            : isLevel2
+                ? 'safeIsland_1_2'
+                : 'safeIsland_1_1';
 
 
 
         if (this.textures.exists(safeIslandKey)) {
-
             this.safeIsland = this.add.image(
                 this.worldWidth - width * (
+                    isLevel3 ? 0.34 :
                     isLevel2 ? 0.30 : 0.25
                 ),
                 height * 0.53,
@@ -1393,9 +1516,10 @@ export default class GameplayScene extends Phaser.Scene {
 
 
 
-        const safeIslandWidth =
-            width * (isLevel2 ? 0.56 : 0.45);
-
+        const safeIslandWidth = width * (
+            isLevel3 ? 0.62 :
+            isLevel2 ? 0.56 : 0.45
+        );
         this.safeIsland.setScale(
             safeIslandWidth / this.safeIsland.width
         );
@@ -1784,11 +1908,16 @@ export default class GameplayScene extends Phaser.Scene {
     // SUNNY SKIES LEVEL 2
     // MONKEY AND BABY ELEPHANT RESCUE
 
-    createLevel2RescueAnimals() {
+    createMultiRescueAnimals() {
 
         const { width } = this.scale;
 
-        // Animal configurations for Level 2.
+
+        // MULTI-ANIMAL RESCUE CONFIGURATIONS
+
+        const isLevel3 =
+            Number(this.sublevelId) === 3;
+
         const animalConfigs = [
             {
                 id: 'monkey-2',
@@ -1803,8 +1932,21 @@ export default class GameplayScene extends Phaser.Scene {
                 texture: 'elephantWorried',
                 happyFaceKey: 'elephantHappyFace',
                 widthRatio: 0.070
-            }
+            },
+
+            // Add the third animal only in Level 3.
+
+            // Third rescue animal for Sunny Skies Level 3
+            ...(isLevel3 ? [{
+                id: 'bunny-1',
+                type: 'bunny',
+                texture: 'bunnyWorried',
+                happyFaceKey: 'bunnyHappyFace',
+                widthRatio: 0.060
+            }] : [])
+
         ];
+
 
         for (const config of animalConfigs) {
 
@@ -1924,7 +2066,7 @@ export default class GameplayScene extends Phaser.Scene {
         // Only implemented Sunny Skies sublevels.
         if (
             mainLevel !== 1 ||
-            ![1, 2].includes(sublevel)
+            ![1, 2,3].includes(sublevel)
         ) {
             return;
         }
@@ -1948,9 +2090,21 @@ export default class GameplayScene extends Phaser.Scene {
             { x: 2.80, y: 0.53, speed: 145 },
             { x: 3.75, y: 0.41, speed: 150 }
         ];
+        const level3Birds = [
+            { x: 1.75, y: 0.42, speed: 140 },
+            { x: 2.45, y: 0.53, speed: 150 },
+            { x: 3.30, y: 0.40, speed: 155 },
+            { x: 4.60, y: 0.49, speed: 160 }
+        ];
 
+        // Select bird configuration by sublevel.
         const birdPositions =
-            sublevel === 2 ? level2Birds : level1Birds;
+            sublevel === 3
+                ? level3Birds
+                : sublevel === 2
+                    ? level2Birds
+                    : level1Birds;
+
 
         this.birdObstacles = birdPositions.map(config => {
 
@@ -2204,27 +2358,30 @@ export default class GameplayScene extends Phaser.Scene {
             animal.prompt.setVisible(false);
 
             // Create happy face inside the balloon.
+
+            // Create happy face inside the balloon.
             const happyFace = this.add.image(
                 this.panda.x,
                 this.panda.y,
                 animal.happyFaceKey
             );
 
-            // Small enough to fit inside the basket.
+            // Set the face size for each rescue level.
             const targetWidth =
-                this.requiredRescues > 1
-                    ? this.pandaWidth * 0.27
-                    : this.pandaWidth * 0.27;
+                this.requiredRescues === 3
+                    ? this.pandaWidth * 0.25
+                    : this.requiredRescues > 1
+                        ? this.pandaWidth * 0.24
+                        : this.pandaWidth * 0.27;
 
-            happyFace.setScale(
-                targetWidth / happyFace.width
-            );
+            // IMPORTANT: Apply the calculated size!
+            happyFace.setScale(targetWidth / happyFace.width);
 
             happyFace.setDepth(21);
 
             animal.carriedFace = happyFace;
-
             this.carriedAnimalFaces.push(happyFace);
+
 
             // Update rescued animal count.
             this.rescuedCount++;
@@ -2284,8 +2441,10 @@ export default class GameplayScene extends Phaser.Scene {
         // KEEP ANIMALS INSIDE BALLOON
 
         updateCarriedAnimalFaces() {
+
             if (
-                !this.carriedAnimalFaces || this.carriedAnimalFaces.length === 0
+                !this.carriedAnimalFaces ||
+                this.carriedAnimalFaces.length === 0
             ) {
                 return;
             }
@@ -2295,15 +2454,34 @@ export default class GameplayScene extends Phaser.Scene {
             this.carriedAnimalFaces.forEach(
                 (face, index) => {
 
-                    // Place faces beside the panda
-                    // inside the balloon basket.
+                    let offsetX;
+
+                    if (this.requiredRescues === 3) {
+
+                        // Sunny Skies Level 3:
+                        // Three larger faces close to panda.
+                        const level3Offsets = [
+                            -0.10, // Monkey
+                             0.08, // Elephant
+                             0.22  // Bunny closer to panda
+                        ];
+
+                        offsetX = level3Offsets[index] ?? 0;
+
+                    } else if (this.requiredRescues > 1) {
+
+                        // Preserve Level 2 positions.
+                        offsetX = 0.02 + index * 0.25;
+
+                    } else {
+
+                        // Preserve Level 1 position.
+                        offsetX = 0.17;
+                    }
+
                     const faceX =
                         basket.x +
-                        this.pandaWidth * (
-                            this.requiredRescues > 1
-                                ? 0.02 + index * 0.25
-                                : 0.17
-                        );
+                        this.pandaWidth * offsetX;
 
                     const faceY =
                         basket.y -
@@ -2323,7 +2501,7 @@ export default class GameplayScene extends Phaser.Scene {
 
             // Enable landing for Sunny Skies 1/3 and 2/3.
             if (
-                Number(this.mainLevelId) !== 1 || ![1, 2].includes(Number(this.sublevelId))
+                Number(this.mainLevelId) !== 1 || ![1, 2, 3].includes(Number(this.sublevelId))
             ) {
                 return;
             }
@@ -2342,31 +2520,36 @@ export default class GameplayScene extends Phaser.Scene {
                 return;
             }
 
-            // Approximate paw-print landing position
-            // relative to the Safe Island.
+
+            // SAFE ISLAND LANDING POSITION
 
             const isLevel2 =
                 Number(this.sublevelId) === 2;
 
-            // The Level 2 paw-print area is positioned
-            // differently from the original Safe Island.
+            const isLevel3 =
+                Number(this.sublevelId) === 3;
+
+            // Level 3 uses the new paw-print artwork.
             const landingX =
                 this.safeIsland.x +
-                this.safeIsland.displayWidth *
-                (isLevel2 ? -0.02 : -0.05);
+                this.safeIsland.displayWidth * (
+                    isLevel3 ? 0.03 :
+                    isLevel2 ? -0.02 : -0.05
+                );
 
             const landingY =
                 this.safeIsland.y +
-                this.safeIsland.displayHeight *
-                (isLevel2 ? -0.12 : -0.08);
-
+                this.safeIsland.displayHeight * (
+                    isLevel3 ? 0.055 :
+                    isLevel2 ? -0.12 : -0.08
+                );
 
             // Use the existing balloon basket position,
             // not the center of the full panda image.
             const basket =
                 this.getBalloonBasketPosition();
 
-         const landingWidth =
+            const landingWidth =
                 this.safeIsland.displayWidth * 0.30;
 
             const landingHeight =
@@ -2580,6 +2763,9 @@ export default class GameplayScene extends Phaser.Scene {
             const isLevel2 =
                 Number(this.mainLevelId) === 1 &&
                 Number(this.sublevelId) === 2;
+            const isLevel3 =
+                Number(this.mainLevelId) === 1 &&
+                Number(this.sublevelId) === 3;
 
             const rescuedAnimals =
                 this.rescueAnimals.filter(
@@ -2594,10 +2780,19 @@ export default class GameplayScene extends Phaser.Scene {
                 }
 
                 // Select the correct sitting animal.
+
+
+
+                // ==========================================
+                // SELECT DELIVERED ANIMAL TEXTURE
+                // ==========================================
+
                 const safeTexture =
                     animal.type === 'elephant'
                         ? 'elephantSafe'
-                        : 'monkeySafe';
+                        : animal.type === 'bunny'
+                            ? 'bunnySafe'
+                            : 'monkeySafe';
 
                 if (!this.textures.exists(safeTexture)) {
                     console.warn(
@@ -2607,15 +2802,25 @@ export default class GameplayScene extends Phaser.Scene {
                     return;
                 }
 
-                // Position animals beside each other
-                // on the Level 2 Safe Island.
-                const xOffset = isLevel2
-                    ? (index === 0 ? -0.16 : 0.14)
-                    : -0.24;
+                // POSITION ANIMALS ON SAFE ISLAND
 
-                const yOffset = isLevel2
-                    ? 0.065
-                    : -0.04;
+                const level3Offsets = [
+                    -0.26, // Monkey
+                     0.12, // Elephant
+                     0.21  // Bunny
+                ];
+
+                const xOffset = isLevel3
+                    ? (level3Offsets[index] ?? 0)
+                    : isLevel2
+                        ? (index === 0 ? -0.16 : 0.14)
+                        : -0.24;
+
+                const yOffset = isLevel3
+                    ? 0.08
+                    : isLevel2
+                        ? 0.065
+                        : -0.04;
 
                 const deliveredSprite = this.add.image(
                     this.safeIsland.x +
@@ -2625,21 +2830,35 @@ export default class GameplayScene extends Phaser.Scene {
                     safeTexture
                 );
 
-                // Scale animals relative to the island.
-                const sizeRatio = isLevel2
+                // Level 3 animals should fit together.
+                const sizeRatio = isLevel3
                     ? (animal.type === 'elephant'
-                        ? 0.14
-                        : 0.12)
-                    : 0.13;
+                        ? 0.11
+                        : 0.09)
+                    : isLevel2
+                        ? (animal.type === 'elephant'
+                            ? 0.14
+                            : 0.12)
+                        : 0.13;
+
+
 
                 deliveredSprite.setScale(
                     (this.safeIsland.displayWidth * sizeRatio) /
                     deliveredSprite.width
                 );
 
-                // Anchor at the animal's feet.
+
+                // Anchor the animal at its feet.
                 deliveredSprite.setOrigin(0.5, 1);
-                deliveredSprite.setDepth(22);
+
+                // In Level 3, keep delivered animals
+                // behind the panda if their images overlap.
+                // Preserve the original depth in Levels 1 and 2.
+                deliveredSprite.setDepth(
+                    isLevel3 ? 18 : 22
+                );
+
 
                 this.deliveredAnimals.push(deliveredSprite);
 
@@ -3266,13 +3485,73 @@ export default class GameplayScene extends Phaser.Scene {
                     Number(this.sublevelId) + 1;
 
                 // No more sublevels after 3/3.
+
+                // MOVE TO THE NEXT MAIN LEVEL
+
                 if (nextSublevelId > 3) {
-                    statusText.setText(
-                        'Return to Levels to continue.'
-                    );
-                    checkingProgress = false;
-                        return;
+
+                    const nextMainLevelId =
+                        Number(this.mainLevelId) + 1;
+
+                    try {
+                        const progress =
+                            await fetchPlayerProgress();
+
+                        if (!this.sys.isActive()) return;
+
+                        const nextMainLevel = progress.find(
+                            level =>
+                                Number(level.mainLevelId) ===
+                                nextMainLevelId
+                        );
+
+                        if (nextMainLevel?.unlocked !== true) {
+                            statusText.setText(
+                                'Next region is still locked.'
+                            );
+                            return;
+                        }
+
+                        const gameplayMusic =
+                            this.sound.get('gameplayMusic');
+
+                        if (gameplayMusic) {
+                            gameplayMusic.stop();
+                        }
+
+                        AudioManager.startMusic(
+                            this,
+                            'menuMusic'
+                        );
+
+                        // Show the next region's sublevels.
+                        this.scene.start(
+                            'SublevelSelectionScene',
+                            {
+                                levelId: nextMainLevelId
+                            }
+                        );
+
+                    } catch (error) {
+
+                        console.error(
+                            'Unable to open next region:',
+                            error
+                        );
+
+                        if (this.sys.isActive()) {
+                            statusText.setText(
+                                'Unable to check next region.'
+                            );
+                        }
+
+                    } finally {
+                        checkingProgress = false;
+                    }
+
+                    return;
                 }
+
 
                 try {
                     const progress =
