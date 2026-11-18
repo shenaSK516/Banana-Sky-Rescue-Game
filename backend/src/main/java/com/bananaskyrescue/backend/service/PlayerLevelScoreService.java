@@ -46,18 +46,23 @@ public class PlayerLevelScoreService {
             int activeSeconds,
             int remainingEnergy) {
 
-        // VALIDATE MAIN LEVEL AND SUBLEVEL
+        // VALIDATE SUPPORTED LEVELS
 
-        // Currently supports all three Sunny Skies sublevels.
-        if (
-                mainLevelId != 1 ||
-                sublevelId < 1 ||
-                sublevelId > 3
-        ) {
-            throw new ResponseStatusException(
-                    HttpStatus.BAD_REQUEST,
-                    "Unsupported level or sublevel"
-            );
+        boolean isSunnySkies =
+                mainLevelId == 1 &&
+                sublevelId >= 1 &&
+                sublevelId <= 3;
+
+        boolean isWindyLevel1 =
+                mainLevelId == 2 &&
+                sublevelId == 1;
+
+        if (!isSunnySkies && !isWindyLevel1) {
+
+                throw new ResponseStatusException(
+                        HttpStatus.BAD_REQUEST,
+                        "Unsupported level or sublevel"
+                );
         }
 
         // VALIDATE REQUIRED ANIMAL RESCUES
@@ -122,6 +127,28 @@ public class PlayerLevelScoreService {
                                 "Player account not found"
                         )
                 );
+
+        // WINDY HEIGHTS UNLOCK VALIDATION
+        // Sunny Skies 3/3 must be completed first.
+
+        if (mainLevelId == 2 && sublevelId == 1) {
+
+        boolean sunnySkiesCompleted =
+                progressRepository
+                        .existsByPlayer_IdAndMainLevelIdAndSublevelId(
+                                player.getId(),
+                                1,
+                                3
+                        );
+
+        if (!sunnySkiesCompleted) {
+
+                throw new ResponseStatusException(
+                        HttpStatus.FORBIDDEN,
+                        "Complete Sunny Skies 3/3 before Windy Heights"
+                );
+        }
+        }
 
         // VALIDATE SUBLEVEL UNLOCKING
 

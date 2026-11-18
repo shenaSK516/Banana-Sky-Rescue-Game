@@ -510,6 +510,59 @@ export default class BootScene extends Phaser.Scene {
             '/assets/gameplay/collectibles/golden-banana.png'
         );
 
+        this.load.image(
+        'windyGameplayBackground',
+        '/assets/gameplay/backgrounds/windy-heights-seamless.png'
+        );
+
+
+        // WINDY HEIGHTS LEVEL 1: SAFE ISLAND
+
+        this.load.image(
+            'safeIsland_2_1',
+            '/assets/gameplay/islands/safe-islands/windy-1.png'
+        );
+
+        // WINDY HEIGHTS: WIND GUST OBSTACLE
+        this.load.image(
+            'windGust',
+            '/assets/gameplay/obstacles/wind-gust.png'
+        );
+
+        // WINDY HEIGHTS: BABY GIRAFFE
+
+this.load.image(
+    'giraffeWorried',
+    '/assets/gameplay/animals/giraffe/giraffe-worried.png'
+);
+
+this.load.image(
+    'giraffeHappyFace',
+    '/assets/gameplay/animals/giraffe/giraffe-happy-face.png'
+);
+
+this.load.image(
+    'giraffeSafe',
+    '/assets/gameplay/animals/giraffe/giraffe-safe.png'
+);
+
+// ========================================
+// WINDY HEIGHTS: STATIONARY ISLANDS
+// ========================================
+
+// Stationary Island 1
+this.load.image(
+    'windyStationaryIsland1',
+    '/assets/gameplay/islands/common/stationary-island-1.png'
+);
+
+// Stationary Island 2
+this.load.image(
+    'windyStationaryIsland2',
+    '/assets/gameplay/islands/common/stationary-island-2.png'
+);
+
+
     }
 
     create() {

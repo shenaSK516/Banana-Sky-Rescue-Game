@@ -101,6 +101,8 @@ export default class GameplayScene extends Phaser.Scene {
         this.blockingIslands = [];
         this.movingIslands = [];
         this.birdObstacles = [];
+        // Windy Heights obstacle state
+        this.windGustObstacles = [];
 
         this.hitFeedbackUntil = 0;
 
@@ -181,21 +183,34 @@ export default class GameplayScene extends Phaser.Scene {
 
         const currentMainLevel = Number(this.mainLevelId);
 
+       // SELECT RESCUE ANIMALS BY MAIN LEVEL
+
         if (
+            currentMainLevel === 2 &&
+            currentSublevel === 1
+        ) {
+
+            // WINDY HEIGHTS 1/3
+            this.requiredRescues = 1;
+            this.createWindyGiraffe();
+
+        } else if (
             currentMainLevel === 1 &&
             [2, 3].includes(currentSublevel)
         ) {
 
-            // Level 2: Monkey + Elephant
-            // Level 3: Monkey + Elephant + Bunny
+            // SUNNY SKIES 2/3 AND 3/3
             this.requiredRescues =
                 currentSublevel === 3 ? 3 : 2;
 
             this.createMultiRescueAnimals();
 
-        } else {
+        } else if (
+            currentMainLevel === 1 &&
+            currentSublevel === 1
+        ) {
 
-            // Preserve original Level 1 behavior.
+            // SUNNY SKIES 1/3
             this.requiredRescues = 1;
             this.createRescueMonkey();
         }
@@ -204,13 +219,20 @@ export default class GameplayScene extends Phaser.Scene {
         // Create each system only ONCE.
         this.createRescueHUD();
         this.createBirdObstacles();
+        this.createWindGustObstacles();
         this.createGoldenBanana();
 
 
-        //SUNNY SKIES BACKGROUND
+
+        // GAMEPLAY BACKGROUND BASED ON MAIN LEVEL
+
+        const backgroundKey =
+            Number(this.mainLevelId) === 2
+                ? 'windyGameplayBackground'
+                : 'sunnyGameplayBackground';
 
         const backgroundTexture =
-            this.textures.get('sunnyGameplayBackground');
+            this.textures.get(backgroundKey);
 
         const sourceImage =
             backgroundTexture.getSourceImage();
@@ -225,7 +247,7 @@ export default class GameplayScene extends Phaser.Scene {
             0,
             width,
             height,
-            'sunnyGameplayBackground'
+            backgroundKey
         );
 
         this.skyBackground.setOrigin(0, 0);
@@ -491,27 +513,38 @@ export default class GameplayScene extends Phaser.Scene {
         const mainLevel = Number(this.mainLevelId);
         const sublevel = Number(this.sublevelId);
 
-        if (
-            mainLevel !== 1 ||
-            ![1, 2,3].includes(sublevel)
-        ) {
+// ENABLE FOR SUNNY SKIES AND WINDY HEIGHTS 1/3
+
+        const isSunnySkies =
+            mainLevel === 1 &&
+            [1, 2, 3].includes(sublevel);
+
+        const isWindyLevel1 =
+            mainLevel === 2 &&
+            sublevel === 1;
+
+        if (!isSunnySkies && !isWindyLevel1) {
             return;
         }
-
         const { width, height } = this.scale;
 
 
         // GOLDEN BANANA POSITION BY SUBLEVEL
+// GOLDEN BANANA POSITION BY LEVEL
 
-        const bananaX = width * (
-            sublevel === 3 ? 3.45 :
-            sublevel === 2 ? 2.20 : 1.83
-        );
+const bananaX = isWindyLevel1
+    ? width * 2.15
+    : width * (
+        sublevel === 3 ? 3.45 :
+        sublevel === 2 ? 2.20 : 1.83
+    );
 
-        const bananaY = height * (
-            sublevel === 3 ? 0.57 :
-            sublevel === 2 ? 0.62 : 0.63
-        );
+const bananaY = isWindyLevel1
+    ? height * 0.60
+    : height * (
+        sublevel === 3 ? 0.57 :
+        sublevel === 2 ? 0.62 : 0.63
+    );
 
 
 
@@ -1223,11 +1256,21 @@ export default class GameplayScene extends Phaser.Scene {
         const mainLevel = Number(this.mainLevelId);
         const sublevel = Number(this.sublevelId);
 
-        // Only create implemented Sunny Skies layouts.
-        if (
-            mainLevel !== 1 ||
-            ![1, 2, 3].includes(sublevel)
-        ) {
+        // WINDY HEIGHTS LEVEL 1/3
+        if (mainLevel === 2 && sublevel === 1) {
+            this.createWindyHeightsLevel1Islands();
+            return;
+        }
+
+        const isSunnySkies =
+            mainLevel === 1 &&
+            [1, 2, 3].includes(sublevel);
+
+        const isWindyLevel1 =
+            mainLevel === 2 &&
+            sublevel === 1;
+
+        if (!isSunnySkies && !isWindyLevel1) {
             return;
         }
 
@@ -1568,6 +1611,182 @@ export default class GameplayScene extends Phaser.Scene {
 
 
 
+    // =============================================
+    // WINDY HEIGHTS LEVEL 1/3: FLOATING ISLANDS
+    // =============================================
+
+    createWindyHeightsLevel1Islands() {
+
+        const { width, height } = this.scale;
+
+        // Reset Windy Heights island collections.
+        this.gameplayIslands = [];
+        this.blockingIslands = [];
+        this.movingIslands = [];
+        this.rescueIslands = [];
+
+        // Separate World 2 layout.
+
+const windyLevel1Layout = [
+
+    // MOVING FLOATING ISLAND 1
+    {
+        key: 'floatingIsland',
+        x: width * 0.85,
+        y: height * 0.76,
+        size: 0.20,
+        moving: true,
+        speed: 65
+    },
+
+    // BABY GIRAFFE RESCUE ISLAND
+    {
+        key: 'animalRescueIsland',
+        x: width * 1.45,
+        y: height * 0.75,
+        size: 0.22,
+        moving: false,
+        rescueAnimal: 'giraffe'
+    },
+
+    // WINDY HEIGHTS STATIONARY ISLAND 1
+    {
+        key: 'windyStationaryIsland1',
+        x: width * 2.05,
+        y: height * 0.27,
+        size: 0.36,
+        moving: false
+    },
+
+    // MOVING FLOATING ISLAND 2
+    {
+        key: 'floatingIsland',
+        x: width * 2.65,
+        y: height * 0.76,
+        size: 0.20,
+        moving: true,
+        speed: 80
+    },
+
+    // WINDY HEIGHTS STATIONARY ISLAND 2
+    {
+        key: 'windyStationaryIsland2',
+        x: width * 3,
+        y: height * 0.30,
+        size: 0.35,
+        moving: false
+    }
+
+];
+
+
+        // Create floating islands.
+        for (const islandData of windyLevel1Layout) {
+
+            if (!this.textures.exists(islandData.key)) {
+                console.warn(
+                    'Missing Windy Heights island texture:',
+                    islandData.key
+                );
+                continue;
+            }
+
+            const island = this.add.image(
+                islandData.x,
+                islandData.y,
+                islandData.key
+            );
+
+            island.setScale(
+                (width * islandData.size) / island.width
+            );
+
+            island.setDepth(5);
+
+            this.gameplayIslands.push(island);
+            this.blockingIslands.push(island);
+
+            // Register the giraffe's rescue island.
+            if (islandData.rescueAnimal) {
+                this.rescueIslands.push({
+                    animalType: islandData.rescueAnimal,
+                    sprite: island
+                });
+            }
+
+            // Reuse existing moving-island mechanics.
+            if (islandData.moving) {
+                this.movingIslands.push({
+                    sprite: island,
+                    speed: islandData.speed,
+                    activated: false,
+                    finished: false
+                });
+            }
+        }
+
+        // =====================================
+        // WINDY HEIGHTS LEVEL 1 SAFE ISLAND
+        // =====================================
+
+        if (this.textures.exists('safeIsland_2_1')) {
+
+            this.safeIsland = this.add.image(
+                this.worldWidth - width * 0.30,
+                height * 0.53,
+                'safeIsland_2_1'
+            );
+
+            this.safeIsland.setScale(
+                (width * 0.50) / this.safeIsland.width
+            );
+
+            this.safeIsland.setDepth(5);
+
+            this.gameplayIslands.push(this.safeIsland);
+
+            // Safe Island is not a blocking obstacle.
+
+            if (this.textures.exists('safeIslandSign')) {
+
+                this.safeIslandSign = this.add.image(
+                    this.safeIsland.x - width * 0.32,
+                    height * 0.30,
+                    'safeIslandSign'
+                );
+
+                this.safeIslandSign.setScale(
+                    (width * 0.10) /
+                    this.safeIslandSign.width
+                );
+
+                this.safeIslandSign.setDepth(6);
+
+                this.gameplayIslands.push(
+                    this.safeIslandSign
+                );
+            }
+
+        } else {
+            console.warn(
+                'Windy Heights Safe Island texture is missing.'
+            );
+        }
+
+        console.log(
+            'Windy Heights 1/3 islands created:',
+            {
+                totalIslands: this.gameplayIslands.length,
+                movingIslands: this.movingIslands.length,
+                rescueIslands: this.rescueIslands.length,
+                worldWidth: this.worldWidth
+            }
+        );
+    }
+
+
+
+
         // COLLISION RECTANGLES
 
 
@@ -1905,6 +2124,117 @@ export default class GameplayScene extends Phaser.Scene {
 
 
 
+    // ==========================================
+    // WINDY HEIGHTS 1/3: BABY GIRAFFE RESCUE
+    // ==========================================
+
+    createWindyGiraffe() {
+
+        if (
+            Number(this.mainLevelId) !== 2 ||
+            Number(this.sublevelId) !== 1
+        ) {
+            return;
+        }
+
+        const { width } = this.scale;
+
+        // Find the giraffe's assigned island.
+        const rescueIslandData =
+            this.rescueIslands?.find(
+                item => item.animalType === 'giraffe'
+            );
+
+        if (!rescueIslandData) {
+            console.error('Giraffe rescue island not found.');
+            return;
+        }
+
+        const requiredTextures = [
+            'giraffeWorried',
+            'giraffeHappyFace',
+            'giraffeSafe'
+        ];
+
+        if (
+            !requiredTextures.every(key =>
+                this.textures.exists(key)
+            )
+        ) {
+            console.error('Giraffe textures are missing.');
+            return;
+        }
+
+        const island = rescueIslandData.sprite;
+
+        // WORRIED GIRAFFE ON RESCUE ISLAND
+
+        const giraffe = this.add.image(
+            island.x,
+            island.y - island.displayHeight * 0.10,
+            'giraffeWorried'
+        );
+
+        giraffe.setOrigin(0.5, 1);
+
+        giraffe.setScale(
+            (width * 0.075) / giraffe.width
+        );
+
+        giraffe.setDepth(12);
+
+        // HELP BUBBLE
+
+        const helpBubble = this.add.image(
+            giraffe.x + giraffe.displayWidth * 0.60,
+            giraffe.y - giraffe.displayHeight * 1.05,
+            'animalHelpBubble'
+        );
+
+        helpBubble.setScale(
+            (width * 0.10) / helpBubble.width
+        );
+
+        helpBubble.setDepth(13);
+
+        // PRESS E TO RESCUE
+
+        const rescuePrompt = this.add.image(
+            giraffe.x,
+            giraffe.y - giraffe.displayHeight * 1.55,
+            'animalRescuePrompt'
+        );
+
+        rescuePrompt.setScale(
+            (width * 0.18) / rescuePrompt.width
+        );
+
+        rescuePrompt.setDepth(30);
+        rescuePrompt.setVisible(false);
+
+        // REGISTER USING THE EXISTING RESCUE SYSTEM
+
+        this.rescueAnimals.push({
+            id: 'giraffe-1',
+            type: 'giraffe',
+
+            sprite: giraffe,
+            helpBubble: helpBubble,
+            prompt: rescuePrompt,
+
+            happyFaceKey: 'giraffeHappyFace',
+
+            rescued: false,
+            carriedFace: null
+        });
+
+        console.log(
+            'Windy Heights baby giraffe created successfully.'
+        );
+    }
+
+
+
     // SUNNY SKIES LEVEL 2
     // MONKEY AND BABY ELEPHANT RESCUE
 
@@ -2056,6 +2386,171 @@ export default class GameplayScene extends Phaser.Scene {
 
 
 
+    // WINDY HEIGHTS: WIND GUST OBSTACLES
+
+    createWindGustObstacles() {
+
+        const mainLevel = Number(this.mainLevelId);
+        const sublevel = Number(this.sublevelId);
+
+        // Only enable for Windy Heights 1/3.
+        if (mainLevel !== 2 || sublevel !== 1) {
+            return;
+        }
+
+        if (!this.textures.exists('windGust')) {
+            console.warn('Wind gust texture is missing.');
+            return;
+        }
+
+        const { width, height } = this.scale;
+
+        const gustPositions = [
+            {
+                x: 2.35,
+                y: 0.48,
+                speed: 65
+            }
+        ];
+
+        this.windGustObstacles = gustPositions.map(config => {
+
+            const gust = this.add.image(
+                width * config.x,
+                height * config.y,
+                'windGust'
+            );
+
+            // Maintain the image's original proportions.
+            const targetWidth = width * 0.16;
+
+            gust.setScale(
+                targetWidth / gust.width
+            );
+
+            gust.setDepth(16);
+
+            return {
+                sprite: gust,
+                speed: config.speed,
+                active: false,
+                finished: false,
+                lastPushTime: -Infinity
+            };
+        });
+
+        console.log(
+            'Windy Heights wind gusts created:',
+            this.windGustObstacles.length
+        );
+    }
+
+
+
+    // ========================================
+    // UPDATE WIND GUST OBSTACLES
+    // ========================================
+
+    updateWindGustObstacles(dt, time) {
+
+        if (
+            !this.gameplayStarted ||
+            this.isGamePaused ||
+            this.isPuzzleOpen ||
+            this.isLandingSequencePlaying ||
+            this.levelCompleted ||
+            this.isGameOver
+        ) {
+            return;
+        }
+
+        const { width } = this.scale;
+
+        for (const obstacle of this.windGustObstacles) {
+
+            if (obstacle.finished) continue;
+
+            const gust = obstacle.sprite;
+
+            if (!obstacle.active) {
+
+                const distance =
+                    gust.x - this.pandaPosition.x;
+
+                if (
+                    distance > 0 &&
+                    distance < width * 1.1
+                ) {
+                    obstacle.active = true;
+                }
+            }
+
+            if (!obstacle.active) continue;
+
+            // Gust travels from right to left.
+            gust.x -= obstacle.speed * dt;
+
+            // Tight collision box to avoid transparent
+            // pixels triggering collisions.
+            const gustBox = new Phaser.Geom.Rectangle(
+                gust.x - gust.displayWidth * 0.28,
+                gust.y - gust.displayHeight * 0.25,
+                gust.displayWidth * 0.56,
+                gust.displayHeight * 0.50
+            );
+
+            const pandaBox = this.getPandaCollisionBox(
+                this.pandaPosition.x,
+                this.pandaPosition.y + this.floatOffset
+            );
+
+            if (
+                Phaser.Geom.Intersects.RectangleToRectangle(
+                    pandaBox,
+                    gustBox
+                )
+            ) {
+
+                // Reuse existing energy collision handling.
+                this.registerPandaHit(time);
+
+                // Apply a small leftward push only once
+                // per collision cooldown.
+                if (
+                    time - obstacle.lastPushTime >=
+                    this.energyHitCooldown
+                ) {
+
+                    const proposedX = Phaser.Math.Clamp(
+                        this.pandaPosition.x - 35,
+                        this.pandaWidth / 2,
+                        this.worldWidth - this.pandaWidth / 2
+                    );
+
+                    // Never push the panda through an island.
+                    if (
+                        !this.getBlockingCollisionAt(
+                            proposedX,
+                            this.pandaPosition.y
+                        )
+                    ) {
+                        this.pandaPosition.x = proposedX;
+                    }
+
+                    obstacle.lastPushTime = time;
+                }
+            }
+
+            // Stop updating after passing the panda.
+            if (
+                gust.x + gust.displayWidth / 2 <
+                this.pandaPosition.x - width * 0.5
+            ) {
+                obstacle.finished = true;
+                gust.setVisible(false);
+            }
+        }
+    }
 
 
     createBirdObstacles() {
@@ -2064,12 +2559,19 @@ export default class GameplayScene extends Phaser.Scene {
         const sublevel = Number(this.sublevelId);
 
         // Only implemented Sunny Skies sublevels.
-        if (
-            mainLevel !== 1 ||
-            ![1, 2,3].includes(sublevel)
-        ) {
-            return;
-        }
+// ENABLE BIRDS FOR BOTH REGIONS
+
+const isSunnySkies =
+    mainLevel === 1 &&
+    [1, 2, 3].includes(sublevel);
+
+const isWindyLevel1 =
+    mainLevel === 2 &&
+    sublevel === 1;
+
+if (!isSunnySkies && !isWindyLevel1) {
+    return;
+}
 
         if (!this.textures.exists('blackBird')) {
             console.warn('Black bird texture is missing');
@@ -2097,9 +2599,17 @@ export default class GameplayScene extends Phaser.Scene {
             { x: 4.60, y: 0.49, speed: 160 }
         ];
 
-        // Select bird configuration by sublevel.
-        const birdPositions =
-            sublevel === 3
+        // WINDY HEIGHTS 1/3 BIRDS
+        const windyLevel1Birds = [
+            { x: 1.90, y: 0.42, speed: 120 },
+            { x: 2.85, y: 0.55, speed: 120 }
+        ];
+
+        // SELECT BIRDS BY MAIN LEVEL AND SUBLEVEL
+
+        const birdPositions = isWindyLevel1
+            ? windyLevel1Birds
+            : sublevel === 3
                 ? level3Birds
                 : sublevel === 2
                     ? level2Birds
@@ -2497,12 +3007,20 @@ export default class GameplayScene extends Phaser.Scene {
 
 
         checkSafeIslandLanding() {
-            // Only Sunny Skies 1/3 for now.
+        // ENABLE LANDING FOR SUNNY SKIES AND WINDY HEIGHTS 1/3
 
-            // Enable landing for Sunny Skies 1/3 and 2/3.
-            if (
-                Number(this.mainLevelId) !== 1 || ![1, 2, 3].includes(Number(this.sublevelId))
-            ) {
+            const mainLevel = Number(this.mainLevelId);
+            const sublevel = Number(this.sublevelId);
+
+            const isSunnySkies =
+                mainLevel === 1 &&
+                [1, 2, 3].includes(sublevel);
+
+            const isWindyLevel1 =
+                mainLevel === 2 &&
+                sublevel === 1;
+
+            if (!isSunnySkies && !isWindyLevel1) {
                 return;
             }
 
@@ -2523,26 +3041,27 @@ export default class GameplayScene extends Phaser.Scene {
 
             // SAFE ISLAND LANDING POSITION
 
-            const isLevel2 =
-                Number(this.sublevelId) === 2;
+const isLevel2 = sublevel === 2;
+const isLevel3 = sublevel === 3;
 
-            const isLevel3 =
-                Number(this.sublevelId) === 3;
+// Windy Heights uses its own paw-print artwork.
+// Keep all existing Sunny Skies offsets unchanged.
 
-            // Level 3 uses the new paw-print artwork.
-            const landingX =
-                this.safeIsland.x +
-                this.safeIsland.displayWidth * (
-                    isLevel3 ? 0.03 :
-                    isLevel2 ? -0.02 : -0.05
-                );
+const landingX =
+    this.safeIsland.x +
+    this.safeIsland.displayWidth * (
+        isWindyLevel1 ? 0.0 :
+        isLevel3 ? 0.03 :
+        isLevel2 ? -0.02 : -0.05
+    );
 
-            const landingY =
-                this.safeIsland.y +
-                this.safeIsland.displayHeight * (
-                    isLevel3 ? 0.055 :
-                    isLevel2 ? -0.12 : -0.08
-                );
+const landingY =
+    this.safeIsland.y +
+    this.safeIsland.displayHeight * (
+        isWindyLevel1 ? -0.06 :
+        isLevel3 ? 0.055 :
+        isLevel2 ? -0.12 : -0.08
+    );
 
             // Use the existing balloon basket position,
             // not the center of the full panda image.
@@ -2767,6 +3286,10 @@ export default class GameplayScene extends Phaser.Scene {
                 Number(this.mainLevelId) === 1 &&
                 Number(this.sublevelId) === 3;
 
+            const isWindyLevel1 =
+                Number(this.mainLevelId) === 2 &&
+                Number(this.sublevelId) === 1;
+
             const rescuedAnimals =
                 this.rescueAnimals.filter(
                     animal => animal.rescued
@@ -2787,12 +3310,16 @@ export default class GameplayScene extends Phaser.Scene {
                 // SELECT DELIVERED ANIMAL TEXTURE
                 // ==========================================
 
-                const safeTexture =
-                    animal.type === 'elephant'
-                        ? 'elephantSafe'
-                        : animal.type === 'bunny'
-                            ? 'bunnySafe'
-                            : 'monkeySafe';
+// SELECT DELIVERED ANIMAL TEXTURE
+
+const safeTexture =
+    animal.type === 'giraffe'
+        ? 'giraffeSafe'
+        : animal.type === 'elephant'
+            ? 'elephantSafe'
+            : animal.type === 'bunny'
+                ? 'bunnySafe'
+                : 'monkeySafe';
 
                 if (!this.textures.exists(safeTexture)) {
                     console.warn(
@@ -2810,17 +3337,21 @@ export default class GameplayScene extends Phaser.Scene {
                      0.21  // Bunny
                 ];
 
-                const xOffset = isLevel3
+                const xOffset = isWindyLevel1
+                    ? 0.17
+                    : isLevel3
                     ? (level3Offsets[index] ?? 0)
                     : isLevel2
                         ? (index === 0 ? -0.16 : 0.14)
                         : -0.24;
 
-                const yOffset = isLevel3
-                    ? 0.08
-                    : isLevel2
-                        ? 0.065
-                        : -0.04;
+                const yOffset = isWindyLevel1
+                    ? -0.02
+                    : isLevel3
+                        ? 0.08
+                        : isLevel2
+                            ? 0.065
+                            : -0.04;
 
                 const deliveredSprite = this.add.image(
                     this.safeIsland.x +
@@ -2831,15 +3362,17 @@ export default class GameplayScene extends Phaser.Scene {
                 );
 
                 // Level 3 animals should fit together.
-                const sizeRatio = isLevel3
-                    ? (animal.type === 'elephant'
-                        ? 0.11
-                        : 0.09)
-                    : isLevel2
-                        ? (animal.type === 'elephant'
-                            ? 0.14
-                            : 0.12)
-                        : 0.13;
+const sizeRatio = isWindyLevel1
+    ? 0.125
+    : isLevel3
+        ? (animal.type === 'elephant'
+            ? 0.11
+            : 0.09)
+        : isLevel2
+            ? (animal.type === 'elephant'
+                ? 0.14
+                : 0.12)
+            : 0.13;
 
 
 
@@ -2867,10 +3400,15 @@ export default class GameplayScene extends Phaser.Scene {
                 );
             });
 
-            console.log(
-                `Sunny Skies ${this.sublevelId}/3: ` +
-                `${this.deliveredAnimals.length} animals delivered`
-            );
+const regionName =
+    Number(this.mainLevelId) === 2
+        ? 'Windy Heights'
+        : 'Sunny Skies';
+
+console.log(
+    `${regionName} ${this.sublevelId}/3: ` +
+    `${this.deliveredAnimals.length} animals delivered`
+);
 
 
 
@@ -4164,6 +4702,13 @@ export default class GameplayScene extends Phaser.Scene {
 
                 const dt = Math.min(delta, 50) / 1000;
 
+                if (this.input.keyboard.addKey('D').isDown) {
+                    console.log({
+                        pandaWorldX: Math.round(this.pandaPosition.x),
+                        cameraScrollX: Math.round(this.cameras.main.scrollX)
+                    });
+                }
+
                 let moveX = 0;
                 let moveY = 0;
 
@@ -4283,6 +4828,7 @@ export default class GameplayScene extends Phaser.Scene {
 
 
                     this.updateBirdObstacles(dt, time);
+                    this.updateWindGustObstacles(dt, time);
 
                     //Energydrain by -1
 
