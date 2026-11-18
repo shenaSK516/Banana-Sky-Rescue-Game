@@ -53,11 +53,14 @@ public class PlayerLevelScoreService {
                 sublevelId >= 1 &&
                 sublevelId <= 3;
 
-        boolean isWindyLevel1 =
-                mainLevelId == 2 &&
-                sublevelId == 1;
+        // SUPPORT WINDY HEIGHTS 1/3 AND 2/3
 
-        if (!isSunnySkies && !isWindyLevel1) {
+        boolean isWindyHeights =
+                mainLevelId == 2 &&
+                sublevelId >= 1 &&
+                sublevelId <= 2;
+
+        if (!isSunnySkies && !isWindyHeights) {
 
                 throw new ResponseStatusException(
                         HttpStatus.BAD_REQUEST,

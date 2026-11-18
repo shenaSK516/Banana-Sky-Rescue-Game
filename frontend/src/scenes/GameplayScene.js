@@ -194,6 +194,16 @@ export default class GameplayScene extends Phaser.Scene {
             this.requiredRescues = 1;
             this.createWindyGiraffe();
 
+
+        } else if (
+            currentMainLevel === 2 &&
+            currentSublevel === 2
+        ) {
+
+        // WINDY HEIGHTS 2/3
+        this.requiredRescues = 2;
+        this.createMultiRescueAnimals();
+
         } else if (
             currentMainLevel === 1 &&
             [2, 3].includes(currentSublevel)
@@ -513,38 +523,52 @@ export default class GameplayScene extends Phaser.Scene {
         const mainLevel = Number(this.mainLevelId);
         const sublevel = Number(this.sublevelId);
 
-// ENABLE FOR SUNNY SKIES AND WINDY HEIGHTS 1/3
+        // ENABLE FOR SUNNY SKIES AND WINDY HEIGHTS 1/3
 
         const isSunnySkies =
             mainLevel === 1 &&
             [1, 2, 3].includes(sublevel);
 
+        // WINDY HEIGHTS 1/3 AND 2/3
+
         const isWindyLevel1 =
             mainLevel === 2 &&
             sublevel === 1;
 
-        if (!isSunnySkies && !isWindyLevel1) {
+        const isWindyLevel2 =
+            mainLevel === 2 &&
+            sublevel === 2;
+
+        if (
+            !isSunnySkies &&
+            !isWindyLevel1 &&
+            !isWindyLevel2
+        ) {
             return;
         }
         const { width, height } = this.scale;
 
 
         // GOLDEN BANANA POSITION BY SUBLEVEL
-// GOLDEN BANANA POSITION BY LEVEL
+// GOLDEN BANANA POSITION BY REGION
 
-const bananaX = isWindyLevel1
-    ? width * 2.15
-    : width * (
-        sublevel === 3 ? 3.45 :
-        sublevel === 2 ? 2.20 : 1.83
-    );
+const bananaX = isWindyLevel2
+    ? width * 2.55
+    : isWindyLevel1
+        ? width * 2.15
+        : width * (
+            sublevel === 3 ? 3.45 :
+            sublevel === 2 ? 2.20 : 1.83
+        );
 
-const bananaY = isWindyLevel1
-    ? height * 0.60
-    : height * (
-        sublevel === 3 ? 0.57 :
-        sublevel === 2 ? 0.62 : 0.63
-    );
+const bananaY = isWindyLevel2
+    ? height * 0.53
+    : isWindyLevel1
+        ? height * 0.60
+        : height * (
+            sublevel === 3 ? 0.57 :
+            sublevel === 2 ? 0.62 : 0.63
+        );
 
 
 
@@ -1256,11 +1280,21 @@ const bananaY = isWindyLevel1
         const mainLevel = Number(this.mainLevelId);
         const sublevel = Number(this.sublevelId);
 
-        // WINDY HEIGHTS LEVEL 1/3
-        if (mainLevel === 2 && sublevel === 1) {
-            this.createWindyHeightsLevel1Islands();
-            return;
-        }
+// ========================================
+// WINDY HEIGHTS LEVEL ROUTING
+// ========================================
+
+// Windy Heights 1/3: Completed
+if (mainLevel === 2 && sublevel === 1) {
+    this.createWindyHeightsLevel1Islands();
+    return;
+}
+
+// Windy Heights 2/3: New milestone
+if (mainLevel === 2 && sublevel === 2) {
+    this.createWindyHeightsLevel2Islands();
+    return;
+}
 
         const isSunnySkies =
             mainLevel === 1 &&
@@ -1662,7 +1696,7 @@ const windyLevel1Layout = [
     {
         key: 'floatingIsland',
         x: width * 2.65,
-        y: height * 0.76,
+        y: height * 0.74,
         size: 0.20,
         moving: true,
         speed: 80
@@ -1784,6 +1818,227 @@ const windyLevel1Layout = [
         );
     }
 
+
+    // =============================================
+    // WINDY HEIGHTS LEVEL 2/3: FLOATING ISLANDS
+    // =============================================
+
+    createWindyHeightsLevel2Islands() {
+
+        const { width, height } = this.scale;
+
+        // Reset island collections for this sublevel.
+        this.gameplayIslands = [];
+        this.blockingIslands = [];
+        this.movingIslands = [];
+        this.rescueIslands = [];
+
+        // =====================================
+        // WINDY HEIGHTS 2/3 ISLAND LAYOUT
+        // =====================================
+
+        const windyLevel2Layout = [
+
+            // MOVING FLOATING ISLAND 1
+            {
+                key: 'floatingIsland',
+                x: width * 0.80,
+                y: height * 0.76,
+                size: 0.20,
+                moving: true,
+                speed: 85
+            },
+
+            // FIRST ANIMAL: BABY GIRAFFE
+            {
+                key: 'animalRescueIsland',
+                x: width * 1.35,
+                y: height * 0.75,
+                size: 0.22,
+                moving: false,
+                rescueAnimal: 'giraffe'
+            },
+
+            // STATIONARY ISLAND 1
+            {
+                key: 'windyStationaryIsland1',
+                x: width * 1.90,
+                y: height * 0.28,
+                size: 0.34,
+                moving: false
+            },
+
+            // MOVING FLOATING ISLAND 2
+            {
+                key: 'floatingIsland',
+                x: width * 2.35,
+                y: height * 0.77,
+                size: 0.20,
+                moving: true,
+                speed: 100
+            },
+
+            // SECOND ANIMAL: BABY ELEPHANT
+            {
+                key: 'animalRescueIsland',
+                x: width * 3.05,
+                y: height * 0.74,
+                size: 0.23,
+                moving: false,
+                rescueAnimal: 'elephant'
+            },
+
+            // STATIONARY ISLAND 2
+            {
+                key: 'windyStationaryIsland2',
+                x: width * 3.55,
+                y: height * 0.29,
+                size: 0.33,
+                moving: false
+            },
+
+            // MOVING FLOATING ISLAND 3
+            {
+                key: 'floatingIsland',
+                x: width * 3.95,
+                y: height * 0.77,
+                size: 0.20,
+                moving: true,
+                speed: 110
+            }
+        ];
+
+        // =====================================
+        // CREATE GAMEPLAY ISLANDS
+        // =====================================
+
+        for (const islandData of windyLevel2Layout) {
+
+            if (!this.textures.exists(islandData.key)) {
+
+                console.warn(
+                    'Missing Windy Heights island texture:',
+                    islandData.key
+                );
+
+                continue;
+            }
+
+            const island = this.add.image(
+                islandData.x,
+                islandData.y,
+                islandData.key
+            );
+
+            // Scale while preserving image proportions.
+            const targetWidth =
+                width * islandData.size;
+
+            island.setScale(
+                targetWidth / island.width
+            );
+
+            island.setDepth(5);
+
+            // Register visible and blocking islands.
+            this.gameplayIslands.push(island);
+            this.blockingIslands.push(island);
+
+            // Register assigned animal rescue island.
+            if (islandData.rescueAnimal) {
+
+                this.rescueIslands.push({
+                    animalType: islandData.rescueAnimal,
+                    sprite: island
+                });
+            }
+
+            // Register moving islands.
+            if (islandData.moving) {
+
+                this.movingIslands.push({
+                    sprite: island,
+                    speed: islandData.speed,
+                    activated: false,
+                    finished: false
+                });
+            }
+        }
+
+        // =====================================
+        // WINDY HEIGHTS LEVEL 2 SAFE ISLAND
+        // =====================================
+
+        const safeIslandKey = 'safeIsland_2_2';
+
+        if (this.textures.exists(safeIslandKey)) {
+
+            this.safeIsland = this.add.image(
+                this.worldWidth - width * 0.30,
+                height * 0.53,
+                safeIslandKey
+            );
+
+            // Slightly larger for two rescued animals.
+            const safeIslandWidth = width * 0.58;
+
+            this.safeIsland.setScale(
+                safeIslandWidth / this.safeIsland.width
+            );
+
+            this.safeIsland.setDepth(5);
+
+            this.gameplayIslands.push(
+                this.safeIsland
+            );
+
+            // Safe Island is not a blocking obstacle.
+
+            // =====================================
+            // SAFE ISLAND SIGN
+            // =====================================
+
+            if (this.textures.exists('safeIslandSign')) {
+
+                this.safeIslandSign = this.add.image(
+                    this.safeIsland.x - width * 0.35,
+                    height * 0.30,
+                    'safeIslandSign'
+                );
+
+                this.safeIslandSign.setScale(
+                    (width * 0.10) /
+                    this.safeIslandSign.width
+                );
+
+                this.safeIslandSign.setDepth(6);
+
+                this.gameplayIslands.push(
+                    this.safeIslandSign
+                );
+            }
+
+        } else {
+
+            console.warn(
+                'Windy Heights 2/3 Safe Island texture missing.'
+            );
+        }
+
+        // =====================================
+        // DEBUG INFORMATION
+        // =====================================
+
+        console.log(
+            'Windy Heights 2/3 islands created:',
+            {
+                totalIslands: this.gameplayIslands.length,
+                movingIslands: this.movingIslands.length,
+                rescueIslands: this.rescueIslands.length,
+                worldWidth: this.worldWidth
+            }
+        );
+    }
 
 
 
@@ -2124,9 +2379,7 @@ const windyLevel1Layout = [
 
 
 
-    // ==========================================
     // WINDY HEIGHTS 1/3: BABY GIRAFFE RESCUE
-    // ==========================================
 
     createWindyGiraffe() {
 
@@ -2248,34 +2501,59 @@ const windyLevel1Layout = [
         const isLevel3 =
             Number(this.sublevelId) === 3;
 
-        const animalConfigs = [
-            {
-                id: 'monkey-2',
-                type: 'monkey',
-                texture: 'monkeyWorried',
-                happyFaceKey: 'monkeyHappyFace',
-                widthRatio: 0.070
-            },
-            {
-                id: 'elephant-1',
-                type: 'elephant',
-                texture: 'elephantWorried',
-                happyFaceKey: 'elephantHappyFace',
-                widthRatio: 0.070
-            },
+        // WINDY HEIGHTS LEVEL 2/3
+        const isWindyLevel2 =
+            Number(this.mainLevelId) === 2 &&
+            Number(this.sublevelId) === 2;
 
-            // Add the third animal only in Level 3.
 
-            // Third rescue animal for Sunny Skies Level 3
-            ...(isLevel3 ? [{
-                id: 'bunny-1',
-                type: 'bunny',
-                texture: 'bunnyWorried',
-                happyFaceKey: 'bunnyHappyFace',
-                widthRatio: 0.060
-            }] : [])
+        const animalConfigs = isWindyLevel2
+            ? [
+                // WINDY HEIGHTS 2/3: BABY GIRAFFE
+                {
+                    id: 'giraffe-2',
+                    type: 'giraffe',
+                    texture: 'giraffeWorried',
+                    happyFaceKey: 'giraffeHappyFace',
+                    widthRatio: 0.075
+                },
 
-        ];
+                // WINDY HEIGHTS 2/3: BABY ELEPHANT
+                {
+                    id: 'elephant-2',
+                    type: 'elephant',
+                    texture: 'elephantWorried',
+                    happyFaceKey: 'elephantHappyFace',
+                    widthRatio: 0.075
+                }
+            ]
+            : [
+                // SUNNY SKIES: KEEP EXISTING CONFIGURATION
+                {
+                   id: 'monkey-2',
+                   type: 'monkey',
+                   texture: 'monkeyWorried',
+                    happyFaceKey: 'monkeyHappyFace',
+                    widthRatio: 0.070
+                },
+                {
+                    id: 'elephant-1',
+                    type: 'elephant',
+                    texture: 'elephantWorried',
+                    happyFaceKey: 'elephantHappyFace',
+                    widthRatio: 0.070
+                },
+
+                // SUNNY SKIES 3/3
+                ...(isLevel3 ? [{
+                    id: 'bunny-1',
+                    type: 'bunny',
+                    texture: 'bunnyWorried',
+                    happyFaceKey: 'bunnyHappyFace',
+                    widthRatio: 0.060
+                }] : [])
+            ];
+
 
 
         for (const config of animalConfigs) {
@@ -2393,8 +2671,12 @@ const windyLevel1Layout = [
         const mainLevel = Number(this.mainLevelId);
         const sublevel = Number(this.sublevelId);
 
-        // Only enable for Windy Heights 1/3.
-        if (mainLevel !== 2 || sublevel !== 1) {
+        // WINDY HEIGHTS 1/3 AND 2/3 ONLY
+
+        if (
+            mainLevel !== 2 ||
+            ![1, 2].includes(sublevel)
+        ) {
             return;
         }
 
@@ -2405,15 +2687,34 @@ const windyLevel1Layout = [
 
         const { width, height } = this.scale;
 
-        const gustPositions = [
-            {
-                x: 2.35,
-                y: 0.48,
-                speed: 65
-            }
-        ];
+        // WIND GUST CONFIGURATION
 
-        this.windGustObstacles = gustPositions.map(config => {
+        const gustPositions = sublevel === 2
+            ? [
+                // First gust, before the Golden Banana
+                {
+                  x: 2.15,
+                  y: 0.46,
+                  speed: 75
+                 },
+
+                // Second gust, after the second rescue
+                {
+                    x: 3.55,
+                    y: 0.52,
+                    speed: 85
+                }
+            ]
+            : [
+                // Preserve Windy Heights 1/3
+                {
+                    x: 2.35,
+                    y: 0.46,
+                    speed: 65
+                }
+            ];
+
+            this.windGustObstacles = gustPositions.map(config => {
 
             const gust = this.add.image(
                 width * config.x,
@@ -2447,9 +2748,7 @@ const windyLevel1Layout = [
 
 
 
-    // ========================================
     // UPDATE WIND GUST OBSTACLES
-    // ========================================
 
     updateWindGustObstacles(dt, time) {
 
@@ -2559,19 +2858,27 @@ const windyLevel1Layout = [
         const sublevel = Number(this.sublevelId);
 
         // Only implemented Sunny Skies sublevels.
-// ENABLE BIRDS FOR BOTH REGIONS
+        // ENABLE BIRDS FOR BOTH REGIONS
 
-const isSunnySkies =
-    mainLevel === 1 &&
-    [1, 2, 3].includes(sublevel);
+        const isSunnySkies =
+            mainLevel === 1 &&
+            [1, 2, 3].includes(sublevel);
 
-const isWindyLevel1 =
-    mainLevel === 2 &&
-    sublevel === 1;
+        const isWindyLevel1 =
+            mainLevel === 2 &&
+            sublevel === 1;
 
-if (!isSunnySkies && !isWindyLevel1) {
-    return;
-}
+        const isWindyLevel2 =
+            mainLevel === 2 &&
+            sublevel === 2;
+
+        if (
+            !isSunnySkies &&
+            !isWindyLevel1 &&
+            !isWindyLevel2
+        ) {
+            return;
+        }
 
         if (!this.textures.exists('blackBird')) {
             console.warn('Black bird texture is missing');
@@ -2605,15 +2912,24 @@ if (!isSunnySkies && !isWindyLevel1) {
             { x: 2.85, y: 0.55, speed: 120 }
         ];
 
-        // SELECT BIRDS BY MAIN LEVEL AND SUBLEVEL
+        // WINDY HEIGHTS 2/3: THREE BIRDS
 
-        const birdPositions = isWindyLevel1
-            ? windyLevel1Birds
-            : sublevel === 3
-                ? level3Birds
-                : sublevel === 2
-                    ? level2Birds
-                    : level1Birds;
+        const windyLevel2Birds = [
+            { x: 1.90, y: 0.42, speed: 140 },
+            { x: 2.75, y: 0.52, speed: 150 },
+            { x: 3.70, y: 0.40, speed: 160 }
+        ];
+
+        // SELECT BIRDS BY MAIN LEVEL AND SUBLEVEL
+        const birdPositions = isWindyLevel2
+            ? windyLevel2Birds
+            : isWindyLevel1
+                ? windyLevel1Birds
+              : sublevel === 3
+                    ? level3Birds
+                    : sublevel === 2
+                        ? level2Birds
+                        : level1Birds;
 
 
         this.birdObstacles = birdPositions.map(config => {
@@ -3016,14 +3332,13 @@ if (!isSunnySkies && !isWindyLevel1) {
                 mainLevel === 1 &&
                 [1, 2, 3].includes(sublevel);
 
-            const isWindyLevel1 =
+            const isWindyHeights =
                 mainLevel === 2 &&
-                sublevel === 1;
+                [1, 2].includes(sublevel);
 
-            if (!isSunnySkies && !isWindyLevel1) {
+            if (!isSunnySkies && !isWindyHeights) {
                 return;
             }
-
             if (
                 !this.gameplayStarted || this.isGamePaused ||this.isLandingSequencePlaying ||this.levelCompleted || this.isGameOver ||!this.safeIsland
             ) {
@@ -3039,29 +3354,39 @@ if (!isSunnySkies && !isWindyLevel1) {
             }
 
 
-            // SAFE ISLAND LANDING POSITION
+            // LANDING POSITION FOR ALL IMPLEMENTED LEVELS
 
-const isLevel2 = sublevel === 2;
-const isLevel3 = sublevel === 3;
+            const isWindyLevel1 =
+                mainLevel === 2 && sublevel === 1;
 
-// Windy Heights uses its own paw-print artwork.
-// Keep all existing Sunny Skies offsets unchanged.
+            const isWindyLevel2 =
+                mainLevel === 2 && sublevel === 2;
 
-const landingX =
-    this.safeIsland.x +
-    this.safeIsland.displayWidth * (
-        isWindyLevel1 ? 0.0 :
-        isLevel3 ? 0.03 :
-        isLevel2 ? -0.02 : -0.05
-    );
+            // SUNNY SKIES LANDING FLAGS
 
-const landingY =
-    this.safeIsland.y +
-    this.safeIsland.displayHeight * (
-        isWindyLevel1 ? -0.06 :
-        isLevel3 ? 0.055 :
-        isLevel2 ? -0.12 : -0.08
-    );
+            const isLevel2 =
+                mainLevel === 1 && sublevel === 2;
+
+            const isLevel3 =
+                mainLevel === 1 && sublevel === 3;
+
+            const landingX =
+                this.safeIsland.x +
+                this.safeIsland.displayWidth * (
+                    isWindyLevel2 ? 0.02 :
+                    isWindyLevel1 ? 0.0 :
+                    isLevel3 ? 0.03 :
+                    isLevel2 ? -0.02 : -0.05
+                );
+
+            const landingY =
+                this.safeIsland.y +
+                this.safeIsland.displayHeight * (
+                    isWindyLevel2 ? -0.06 :
+                    isWindyLevel1 ? -0.06 :
+                    isLevel3 ? 0.055 :
+                    isLevel2 ? -0.12 : -0.08
+                );
 
             // Use the existing balloon basket position,
             // not the center of the full panda image.
@@ -3280,15 +3605,15 @@ const landingY =
             this.deliveredAnimals = [];
 
             const isLevel2 =
-                Number(this.mainLevelId) === 1 &&
-                Number(this.sublevelId) === 2;
+                Number(this.mainLevelId) === 1 && Number(this.sublevelId) === 2;
             const isLevel3 =
-                Number(this.mainLevelId) === 1 &&
-                Number(this.sublevelId) === 3;
+                Number(this.mainLevelId) === 1 && Number(this.sublevelId) === 3;
 
             const isWindyLevel1 =
-                Number(this.mainLevelId) === 2 &&
-                Number(this.sublevelId) === 1;
+                Number(this.mainLevelId) === 2 && Number(this.sublevelId) === 1;
+
+            const isWindyLevel2 =
+                Number(this.mainLevelId) === 2 && Number(this.sublevelId) === 2;
 
             const rescuedAnimals =
                 this.rescueAnimals.filter(
@@ -3302,24 +3627,17 @@ const landingY =
                     animal.carriedFace.setVisible(false);
                 }
 
-                // Select the correct sitting animal.
 
+            // SELECT DELIVERED ANIMAL TEXTURE
 
-
-                // ==========================================
-                // SELECT DELIVERED ANIMAL TEXTURE
-                // ==========================================
-
-// SELECT DELIVERED ANIMAL TEXTURE
-
-const safeTexture =
-    animal.type === 'giraffe'
-        ? 'giraffeSafe'
-        : animal.type === 'elephant'
-            ? 'elephantSafe'
-            : animal.type === 'bunny'
-                ? 'bunnySafe'
-                : 'monkeySafe';
+            const safeTexture =
+                animal.type === 'giraffe'
+                    ? 'giraffeSafe'
+                    : animal.type === 'elephant'
+                        ? 'elephantSafe'
+                        : animal.type === 'bunny'
+                            ? 'bunnySafe'
+                            : 'monkeySafe';
 
                 if (!this.textures.exists(safeTexture)) {
                     console.warn(
@@ -3337,21 +3655,27 @@ const safeTexture =
                      0.21  // Bunny
                 ];
 
-                const xOffset = isWindyLevel1
-                    ? 0.17
-                    : isLevel3
-                    ? (level3Offsets[index] ?? 0)
-                    : isLevel2
-                        ? (index === 0 ? -0.16 : 0.14)
-                        : -0.24;
+            // WINDY HEIGHTS 2/3: TWO DELIVERED ANIMALS
 
-                const yOffset = isWindyLevel1
+            const xOffset = isWindyLevel2
+                ? (animal.type === 'giraffe' ? -0.13 : 0.14)
+                    : isWindyLevel1
+                        ? 0.17
+                        : isLevel3
+                            ? (level3Offsets[index] ?? 0)
+                            : isLevel2
+                                ? (index === 0 ? -0.16 : 0.14)
+                                : -0.24;
+
+               const yOffset = isWindyLevel2
                     ? -0.02
-                    : isLevel3
-                        ? 0.08
-                        : isLevel2
-                            ? 0.065
-                            : -0.04;
+                        : isWindyLevel1
+                        ? -0.02
+                        : isLevel3
+                            ? 0.08
+                            : isLevel2
+                                ? 0.065
+                                : -0.04;
 
                 const deliveredSprite = this.add.image(
                     this.safeIsland.x +
@@ -3362,18 +3686,15 @@ const safeTexture =
                 );
 
                 // Level 3 animals should fit together.
-const sizeRatio = isWindyLevel1
-    ? 0.125
-    : isLevel3
-        ? (animal.type === 'elephant'
-            ? 0.11
-            : 0.09)
-        : isLevel2
-            ? (animal.type === 'elephant'
-                ? 0.14
-                : 0.12)
-            : 0.13;
-
+                const sizeRatio = isWindyLevel2
+                    ? (animal.type === 'giraffe' ? 0.12 : 0.13)
+                        : isWindyLevel1
+                             ? 0.125
+                                : isLevel3
+                                    ? (animal.type === 'elephant' ? 0.11 : 0.09)
+                                : isLevel2
+                                    ? (animal.type === 'elephant' ? 0.14 : 0.12)
+                                    : 0.13;
 
 
                 deliveredSprite.setScale(

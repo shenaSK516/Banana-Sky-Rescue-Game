@@ -523,6 +523,13 @@ export default class BootScene extends Phaser.Scene {
             '/assets/gameplay/islands/safe-islands/windy-1.png'
         );
 
+        // WINDY HEIGHTS LEVEL 2: SAFE ISLAND
+
+        this.load.image(
+            'safeIsland_2_2',
+            '/assets/gameplay/islands/safe-islands/windy-2.png'
+        );
+
         // WINDY HEIGHTS: WIND GUST OBSTACLE
         this.load.image(
             'windGust',
