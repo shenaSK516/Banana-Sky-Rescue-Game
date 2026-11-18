@@ -538,36 +538,54 @@ export default class BootScene extends Phaser.Scene {
 
         // WINDY HEIGHTS: BABY GIRAFFE
 
-this.load.image(
-    'giraffeWorried',
-    '/assets/gameplay/animals/giraffe/giraffe-worried.png'
-);
+        this.load.image(
+            'giraffeWorried',
+            '/assets/gameplay/animals/giraffe/giraffe-worried.png'
+        );
 
-this.load.image(
-    'giraffeHappyFace',
-    '/assets/gameplay/animals/giraffe/giraffe-happy-face.png'
-);
+        this.load.image(
+            'giraffeHappyFace',
+            '/assets/gameplay/animals/giraffe/giraffe-happy-face.png'
+        );
 
-this.load.image(
-    'giraffeSafe',
-    '/assets/gameplay/animals/giraffe/giraffe-safe.png'
-);
+        this.load.image(
+            'giraffeSafe',
+            '/assets/gameplay/animals/giraffe/giraffe-safe.png'
+        );
 
-// ========================================
-// WINDY HEIGHTS: STATIONARY ISLANDS
-// ========================================
+        // Safe Island
+        this.load.image(
+            'safeIsland_2_3',
+            '/assets/gameplay/islands/safe-islands/windy-3.png'
+        );
 
-// Stationary Island 1
-this.load.image(
-    'windyStationaryIsland1',
-    '/assets/gameplay/islands/common/stationary-island-1.png'
-);
+        // New worried baby cow
+        this.load.image(
+            'cowWorried',
+            '/assets/gameplay/animals/cow/cow-worried.png'
+        );
 
-// Stationary Island 2
-this.load.image(
-    'windyStationaryIsland2',
-    '/assets/gameplay/islands/common/stationary-island-2.png'
-);
+        this.load.image(
+            'cowHappyFace',
+            '/assets/gameplay/animals/cow/cow-happy-face.png'
+        );
+
+        this.load.image(
+            'cowSafe',
+            '/assets/gameplay/animals/cow/cow-safe.png'
+        );
+
+        // WINDY HEIGHTS: STATIONARY ISLANDS
+
+        this.load.image(
+            'windyStationaryIsland1',
+            '/assets/gameplay/islands/common/stationary-island-1.png'
+        );
+
+        this.load.image(
+            'windyStationaryIsland2',
+            '/assets/gameplay/islands/common/stationary-island-2.png'
+        );
 
 
     }

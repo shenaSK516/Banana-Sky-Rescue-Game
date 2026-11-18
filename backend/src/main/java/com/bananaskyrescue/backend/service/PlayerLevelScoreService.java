@@ -47,27 +47,24 @@ public class PlayerLevelScoreService {
             int remainingEnergy) {
 
         // VALIDATE SUPPORTED LEVELS
-
         boolean isSunnySkies =
                 mainLevelId == 1 &&
                 sublevelId >= 1 &&
                 sublevelId <= 3;
 
-        // SUPPORT WINDY HEIGHTS 1/3 AND 2/3
-
+        // SUPPORT WINDY HEIGHTS 1/3 - 3/3
         boolean isWindyHeights =
                 mainLevelId == 2 &&
                 sublevelId >= 1 &&
-                sublevelId <= 2;
+                sublevelId <= 3;
 
         if (!isSunnySkies && !isWindyHeights) {
 
                 throw new ResponseStatusException(
-                        HttpStatus.BAD_REQUEST,
-                        "Unsupported level or sublevel"
+                HttpStatus.BAD_REQUEST,
+                "Unsupported level or sublevel"
                 );
         }
-
         // VALIDATE REQUIRED ANIMAL RESCUES
 
         // Sunny Skies 1/3: 1 animal
