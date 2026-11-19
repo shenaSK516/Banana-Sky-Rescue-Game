@@ -588,6 +588,86 @@ export default class BootScene extends Phaser.Scene {
         );
 
 
+        // STORM RESCUE: WORLD 3 ASSETS
+
+        //gameplay background
+        this.load.image(
+            'stormGameplayBackground',
+            '/assets/gameplay/backgrounds/storm-rescue-seamless.png'
+        );
+
+        // Moving floating island
+        this.load.image(
+            'stormFloatingIsland',
+            '/assets/gameplay/islands/common/storm-floating-island.png'
+        );
+
+        // Animal rescue island
+        this.load.image(
+            'stormAnimalRescueIsland',
+            '/assets/gameplay/islands/common/storm-rescue-island.png'
+        );
+
+        // Stationary obstacle islands
+        this.load.image(
+            'stormStationaryIsland1',
+            '/assets/gameplay/islands/common/storm-stationary-1.png'
+        );
+
+        this.load.image(
+            'stormStationaryIsland2',
+            '/assets/gameplay/islands/common/storm-stationary-2.png'
+        );
+
+        // Safe Island for Storm Rescue 1/3
+        this.load.image(
+            'safeIsland_3_1',
+            '/assets/gameplay/islands/safe-islands/storm-1.png'
+        );
+
+        // Safe Island for Storm Rescue 2/3
+        this.load.image(
+            'safeIsland_3_2',
+            '/assets/gameplay/islands/safe-islands/storm-2.png'
+        );
+
+        // Safe Island for Storm Rescue 3/3
+        this.load.image(
+            'safeIsland_3_3',
+            '/assets/gameplay/islands/safe-islands/storm-3.png'
+        );
+
+        // New Storm Rescue obstacles
+        this.load.image(
+            'stormCloud',
+            '/assets/gameplay/obstacles/storm-cloud.png'
+        );
+
+        this.load.image(
+            'stormBat',
+            '/assets/gameplay/obstacles/storm-bat.png'
+        );
+
+
+        // ==========================================
+        // STORM RESCUE: BABY FOX
+        // ==========================================
+
+        this.load.image(
+            'foxWorried',
+            '/assets/gameplay/animals/fox/fox-worried.png'
+        );
+
+        this.load.image(
+            'foxHappyFace',
+            '/assets/gameplay/animals/fox/fox-happy-face.png'
+        );
+
+        this.load.image(
+            'foxSafe',
+            '/assets/gameplay/animals/fox/fox-safe.png'
+        );
+
     }
 
     create() {
