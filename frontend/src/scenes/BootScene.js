@@ -649,9 +649,7 @@ export default class BootScene extends Phaser.Scene {
         );
 
 
-        // ==========================================
         // STORM RESCUE: BABY FOX
-        // ==========================================
 
         this.load.image(
             'foxWorried',
@@ -667,6 +665,27 @@ export default class BootScene extends Phaser.Scene {
             'foxSafe',
             '/assets/gameplay/animals/fox/fox-safe.png'
         );
+
+
+        // STORM RESCUE: BABY CHEETAH
+
+
+        this.load.image(
+            'cheetahWorried',
+            '/assets/gameplay/animals/cheetah/cheetah-worried.png'
+        );
+
+        this.load.image(
+            'cheetahHappyFace',
+            '/assets/gameplay/animals/cheetah/cheetah-happy-face.png'
+        );
+
+        this.load.image(
+            'cheetahSafe',
+            '/assets/gameplay/animals/cheetah/cheetah-safe.png'
+        );
+
+
 
     }
 

@@ -32,7 +32,7 @@ public class PlayerLevelScoreService {
         this.progressRepository = progressRepository;
     }
 
-    // SAVE PLAYER'S COMPLETED LEVEL SCORE
+    // SAVE COMPLETED LEVEL SCORE
 
     @Transactional
     public SavedScore saveLevelScore(
@@ -57,43 +57,40 @@ public class PlayerLevelScoreService {
                 sublevelId >= 1 &&
                 sublevelId <= 3;
 
-        // STORM RESCUE: 1/3
-        boolean isStormRescueLevel1 =
-                mainLevelId == 3 &&
-                sublevelId == 1;
+        // STORM RESCUE: 1/3, 2/3 AND 3/3
 
-        // Reject unsupported levels
+        boolean isStormRescue =
+                mainLevelId == 3 &&
+                sublevelId >= 1 &&
+                sublevelId <= 3;
+
+        // Reject unsupported levels.
         if (
                 !isSunnySkies &&
                 !isWindyHeights &&
-                !isStormRescueLevel1
+                !isStormRescue
         ) {
-
             throw new ResponseStatusException(
                     HttpStatus.BAD_REQUEST,
                     "Unsupported level or sublevel"
             );
         }
 
-        // VALIDATE REQUIRED ANIMAL RESCUES
 
-        // SUNNY SKIES:
-        // 1/3 = 1 animal
-        // 2/3 = 2 animals
-        // 3/3 = 3 animals
+        // REQUIRED ANIMAL RESCUES
 
-        // WINDY HEIGHTS:
-        // 1/3 = 1 animal
-        // 2/3 = 2 animals
-        // 3/3 = 3 animals
+        // Sunny Skies:
+        // 1/3 = 1, 2/3 = 2, 3/3 = 3
 
-        // STORM RESCUE:
-        // 1/3 = 2 animals (Fox + Rabbit)
+        // Windy Heights:
+        // 1/3 = 1, 2/3 = 2, 3/3 = 3
 
-        int requiredRescues =
-                isStormRescueLevel1
-                        ? 2
-                        : sublevelId;
+        // Storm Rescue:
+        // 1/3 = 2, 2/3 = 3, 3/3 = 4
+
+        int requiredRescues = isStormRescue
+                ? sublevelId + 1
+                : sublevelId;
 
         if (rescuedAnimals != requiredRescues) {
 
@@ -103,9 +100,8 @@ public class PlayerLevelScoreService {
             );
         }
 
-        // ==========================================
-        // 3. VALIDATE GAMEPLAY DURATION
-        // ==========================================
+
+        // VALIDATE GAMEPLAY DURATION
 
         if (activeSeconds < 0 || activeSeconds > 3600) {
 
@@ -115,7 +111,7 @@ public class PlayerLevelScoreService {
             );
         }
 
-        //VALIDATE REMAINING BANANA ENERGY
+        // VALIDATE REMAINING BANANA ENERGY
 
         if (remainingEnergy < 1 || remainingEnergy > 100) {
 
@@ -125,7 +121,7 @@ public class PlayerLevelScoreService {
             );
         }
 
-        //CALCULATE SCORE ON THE BACKEND
+        // CALCULATE SCORE ON BACKEND
 
         int rescuePoints = rescuedAnimals * 100;
 
@@ -139,7 +135,7 @@ public class PlayerLevelScoreService {
         int calculatedScore =
                 rescuePoints + timeBonus + energyBonus;
 
-        // 6. FIND AUTHENTICATED PLAYER
+        //  FIND AUTHENTICATED PLAYER
 
         Player player = playerRepository
                 .findByUsername(username)
@@ -150,11 +146,9 @@ public class PlayerLevelScoreService {
                         )
                 );
 
+        // WINDY HEIGHTS UNLOCK VALIDATION
 
-        // 7. WINDY HEIGHTS UNLOCK VALIDATION
-
-        // Windy Heights 1/3 requires completion
-        // of Sunny Skies 3/3.
+        // Windy Heights 1/3 requires Sunny Skies 3/3.
 
         if (mainLevelId == 2 && sublevelId == 1) {
 
@@ -177,11 +171,9 @@ public class PlayerLevelScoreService {
 
         // STORM RESCUE UNLOCK VALIDATION
 
+        // Storm Rescue 1/3 requires Windy Heights 3/3.
 
-        // Storm Rescue 1/3 requires completion
-        // of Windy Heights 3/3.
-
-        if (isStormRescueLevel1) {
+        if (mainLevelId == 3 && sublevelId == 1) {
 
             boolean windyHeightsCompleted =
                     progressRepository
@@ -202,9 +194,10 @@ public class PlayerLevelScoreService {
 
         // VALIDATE SUBLEVEL UNLOCKING
 
-        // Sublevel 1 has no same-world prerequisite.
-        // Sublevel 2 requires Sublevel 1 completion.
-        // Sublevel 3 requires Sublevel 2 completion.
+        // Sublevel 2 requires Sublevel 1.
+        // Sublevel 3 requires Sublevel 2.
+
+        // This also validates Storm Rescue 2/3.
 
         if (sublevelId > 1) {
 
@@ -242,7 +235,7 @@ public class PlayerLevelScoreService {
 
             scoreRecord = existingScore.get();
 
-            // Update only if new score is better.
+            // Update only if the new score is better.
             newPersonalBest = scoreRecord.updateBestScore(
                     calculatedScore,
                     rescuedAnimals,
@@ -252,7 +245,7 @@ public class PlayerLevelScoreService {
 
         } else {
 
-            // First successful level completion.
+            // First successful completion.
             scoreRecord = new PlayerLevelScore(
                     player,
                     mainLevelId,
@@ -269,17 +262,10 @@ public class PlayerLevelScoreService {
         // SAVE PERSONAL BEST SCORE
 
         if (newPersonalBest) {
-
             scoreRepository.save(scoreRecord);
         }
 
-        // ==========================================
-        // 12. SAVE LEVEL COMPLETION PROGRESS
-        // ==========================================
-
-        // Save completion separately from personal best.
-        // Replaying a completed level should not
-        // create duplicate completion records.
+        // SAVE LEVEL COMPLETION PROGRESS
 
         boolean alreadyCompleted =
                 progressRepository
@@ -301,9 +287,8 @@ public class PlayerLevelScoreService {
             progressRepository.save(completedLevel);
         }
 
-        // ==========================================
-        // 13. RETURN SAVED SCORE RESULT
-        // ==========================================
+        //  RETURN SAVED SCORE RESULT
+
 
         return new SavedScore(
                 mainLevelId,
@@ -314,9 +299,7 @@ public class PlayerLevelScoreService {
         );
     }
 
-    // ==========================================
     // SCORE RESPONSE
-    // ==========================================
 
     public record SavedScore(
             int mainLevelId,

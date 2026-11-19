@@ -152,20 +152,24 @@ export default class GameplayScene extends Phaser.Scene {
 
        // WORLD WIDTH BASED ON REGION AND SUBLEVEL
 
+
         const isStormRescue =
             Number(this.mainLevelId) === 3;
 
-                this.worldWidth = width * (
-                isStormRescue
-                    ? (
-                        currentSublevel === 3 ? 8.5 :
-                        currentSublevel === 2 ? 7.0 : 5.5
-                    )
-                    : (
-                        currentSublevel === 3 ? 6.0 :
-                        currentSublevel === 2 ? 4.8 : 4
-                    )
-                );
+
+            this.worldWidth = width * (
+            isStormRescue
+                ? (
+                    currentSublevel === 3 ? 9.0 :
+                    currentSublevel === 2 ? 7.0 : 5.5
+                )
+                : (
+                    currentSublevel === 3 ? 6.0 :
+                    currentSublevel === 2 ? 4.8 : 4
+                )
+        );
+
+
 
         this.worldHeight = height;
 
@@ -179,78 +183,61 @@ export default class GameplayScene extends Phaser.Scene {
             this.worldHeight
         );
 
-        //Gameplay islands
-
-
 
         // CREATE GAMEPLAY WORLD
 
         this.createGameplayIslands();
 
 
-
-
-        // CREATE RESCUE ANIMALS BY MAIN LEVEL
-
         const currentMainLevel = Number(this.mainLevelId);
 
-        // STORM RESCUE 1/3: FOX AND RABBIT
+        // STORM RESCUE
 
-        if (
-            currentMainLevel === 3 &&
-            currentSublevel === 1
-        ) {
+        if (currentMainLevel === 3) {
 
-            this.requiredRescues = 2;
+            this.requiredRescues =
+                currentSublevel === 3 ? 4 :
+                currentSublevel === 2 ? 3 : 2;
+
             this.createMultiRescueAnimals();
+
+        // WINDY HEIGHTS
 
         } else if (
             currentMainLevel === 2 &&
             currentSublevel === 1
         ) {
 
-            // WINDY HEIGHTS 1/3
             this.requiredRescues = 1;
             this.createWindyGiraffe();
 
         } else if (
             currentMainLevel === 2 &&
-            currentSublevel === 2
+            [2, 3].includes(currentSublevel)
         ) {
 
-            // WINDY HEIGHTS 2/3
-            this.requiredRescues = 2;
+            this.requiredRescues = currentSublevel;
             this.createMultiRescueAnimals();
 
-        } else if (
-            currentMainLevel === 2 &&
-            currentSublevel === 3
-        ) {
-
-            // WINDY HEIGHTS 3/3
-            this.requiredRescues = 3;
-            this.createMultiRescueAnimals();
+        // SUNNY SKIES
 
         } else if (
             currentMainLevel === 1 &&
             [2, 3].includes(currentSublevel)
         ) {
 
-            // SUNNY SKIES 2/3 AND 3/3
-            this.requiredRescues =
-                currentSublevel === 3 ? 3 : 2;
-
-            this.createMultiRescueAnimals();
+        this.requiredRescues = currentSublevel;
+        this.createMultiRescueAnimals();
 
         } else if (
             currentMainLevel === 1 &&
             currentSublevel === 1
         ) {
 
-            // SUNNY SKIES 1/3
-            this.requiredRescues = 1;
-            this.createRescueMonkey();
-        }
+        this.requiredRescues = 1;
+        this.createRescueMonkey();
+    }
+
 
         // Create each system only ONCE.
         this.createRescueHUD();
@@ -548,10 +535,16 @@ export default class GameplayScene extends Phaser.Scene {
 
     createGoldenBanana() {
 
-        // Enable Golden Banana for Sunny Skies
-        // Level 1/3 and Level 2/3.
+        if (
+            Number(this.mainLevelId) === 3 && Number(this.sublevelId) === 3
+        ) {
+            this.createStormLevel3GoldenBananas();
+            return;
+        }
         const mainLevel = Number(this.mainLevelId);
         const sublevel = Number(this.sublevelId);
+
+
 
         // ENABLE FOR SUNNY SKIES AND WINDY HEIGHTS 1/3
 
@@ -581,6 +574,13 @@ export default class GameplayScene extends Phaser.Scene {
             mainLevel === 3 &&
             sublevel === 1;
 
+
+        const isStormLevel2 =
+            mainLevel === 3 &&
+            sublevel === 2;
+
+
+
         // GOLDEN BANANA LEVEL AVAILABILITY
 
         if (
@@ -588,7 +588,9 @@ export default class GameplayScene extends Phaser.Scene {
             !isWindyLevel1 &&
             !isWindyLevel2 &&
             !isWindyLevel3 &&
-            !isStormLevel1
+            !isStormLevel1 &&
+            !isStormLevel2
+
         ) {
             return;
         }
@@ -598,31 +600,41 @@ export default class GameplayScene extends Phaser.Scene {
 
         const { width, height } = this.scale;
 
-        const bananaX = isStormLevel1
-            ? width * 2.65
-            : isWindyLevel3
-                ? width * 3.40
-                : isWindyLevel2
-                    ? width * 2.55
-                    : isWindyLevel1
-                        ? width * 2.15
-                        : width * (
-                            sublevel === 3 ? 3.45 :
-                            sublevel === 2 ? 2.20 : 1.83
-                        );
 
-        const bananaY = isStormLevel1
-            ? height * 0.58
-            : isWindyLevel3
-                ? height * 0.57
-                : isWindyLevel2
-                    ? height * 0.53
-                    : isWindyLevel1
-                        ? height * 0.60
-                        : height * (
-                            sublevel === 3 ? 0.57 :
-                            sublevel === 2 ? 0.62 : 0.63
-                        );
+        // ==========================================
+        // GOLDEN BANANA POSITION BY LEVEL
+        // ==========================================
+
+             const bananaX = isStormLevel2
+                    ? width * 4.10
+                    : isStormLevel1
+                        ? width * 2.65
+                        : isWindyLevel3
+                            ? width * 3.40
+                            : isWindyLevel2
+                                ? width * 2.55
+                                : isWindyLevel1
+                                    ? width * 2.15
+                                    : width * (
+                                        sublevel === 3 ? 3.45 :
+                                        sublevel === 2 ? 2.20 : 1.83
+                                    );
+
+            const bananaY = isStormLevel2
+            ? height * 0.57
+            : isStormLevel1
+                ? height * 0.58
+                : isWindyLevel3
+                    ? height * 0.57
+                    : isWindyLevel2
+                        ? height * 0.53
+                        : isWindyLevel1
+                            ? height * 0.60
+                            : height * (
+                                sublevel === 3 ? 0.57 :
+                                sublevel === 2 ? 0.62 : 0.63
+                            );
+
 
 
 
@@ -709,7 +721,136 @@ export default class GameplayScene extends Phaser.Scene {
         }
 
 
+    // STORM RESCUE 3/3: TWO GOLDEN BANANAS
+
+    createStormLevel3GoldenBananas() {
+
+        const { width, height } = this.scale;
+
+        this.stormLevel3Bananas = [];
+
+        const positions = [
+            {
+                id: 'storm-banana-1',
+                x: width * 3.90,
+                y: height * 0.54
+            },
+            {
+                id: 'storm-banana-2',
+                x: width * 7.45,
+                y: height * 0.56
+            }
+        ];
+
+        if (!this.textures.exists('goldenBanana')) {
+            console.error('Golden Banana texture missing.');
+            return;
+        }
+
+        for (const config of positions) {
+
+            const bananaContainer =
+                this.add.container(config.x, config.y);
+
+            const banana = this.add.image(
+                0,
+                0,
+                'goldenBanana'
+            );
+
+            banana.setScale(
+                (width * 0.10) / banana.width
+            );
+
+            bananaContainer.add(banana);
+            bananaContainer.setDepth(25);
+
+            // Glowing dotted trail
+            const maxDistance = width * 0.24;
+            const startDistance = width * 0.07;
+            const dotsPerSide = 11;
+
+            for (const side of [-1, 1]) {
+
+                for (let i = 0; i < dotsPerSide; i++) {
+
+                    const distance =
+                        startDistance +
+                        (i / (dotsPerSide - 1)) *
+                        (maxDistance - startDistance);
+
+                    const progress =
+                        distance / maxDistance;
+
+                    const curveY = height * (
+                        -0.035 +
+                        0.13 * progress * progress
+                    );
+
+                    const dot = this.add.circle(
+                        side * distance,
+                        curveY,
+                        5,
+                        0xffe066,
+                        0.9
+                    );
+
+                    dot.setStrokeStyle(
+                        2,
+                        0xfff7b3,
+                        1
+                    );
+
+                    dot.setBlendMode(
+                        Phaser.BlendModes.ADD
+                    );
+
+                    bananaContainer.add(dot);
+
+                    this.tweens.add({
+                        targets: dot,
+                        alpha: 0.25,
+                        scale: 1.5,
+                        duration: 500 + i * 60,
+                        yoyo: true,
+                        repeat: -1,
+                        ease: 'Sine.easeInOut'
+                    });
+                }
+            }
+
+            this.tweens.add({
+                targets: bananaContainer,
+                y: config.y - 12,
+                duration: 1100,
+                yoyo: true,
+                repeat: -1,
+                ease: 'Sine.easeInOut'
+            });
+
+            this.stormLevel3Bananas.push({
+                id: config.id,
+                container: bananaContainer,
+                image: banana,
+                collected: false
+            });
+        }
+
+        console.log(
+            'Storm Rescue 3/3 Golden Bananas created:',
+            this.stormLevel3Bananas.length
+        );
+    }
+
     checkGoldenBananaCollection() {
+
+        if (
+            Number(this.mainLevelId) === 3 &&
+            Number(this.sublevelId) === 3
+        ) {
+        this.checkStormLevel3Bananas();
+            return;
+        }
 
         // Only check during active gameplay.
         if (
@@ -766,6 +907,76 @@ export default class GameplayScene extends Phaser.Scene {
         this.openGoldenBananaPuzzle();
     }
 }
+
+
+    // CHECK STORM RESCUE 3/3 GOLDEN BANANAS
+
+    checkStormLevel3Bananas() {
+
+        if (
+            !this.gameplayStarted ||
+            this.isGamePaused ||
+            this.isPuzzleOpen ||
+            this.isGameOver ||
+            this.levelCompleted ||
+            this.isLandingSequencePlaying ||
+            !this.stormLevel3Bananas
+        ) {
+            return;
+        }
+
+        const pandaBox =
+            this.getPandaCollisionBox(
+                this.pandaPosition.x,
+                this.pandaPosition.y + this.floatOffset
+            );
+
+        for (const item of this.stormLevel3Bananas) {
+
+            if (item.collected) {
+                continue;
+            }
+
+            const bananaWidth =
+                item.image.displayWidth * 0.6;
+
+            const bananaHeight =
+                item.image.displayHeight * 0.6;
+
+            const bananaBox =
+                new Phaser.Geom.Rectangle(
+                    item.container.x - bananaWidth / 2,
+                    item.container.y - bananaHeight / 2,
+                    bananaWidth,
+                    bananaHeight
+                );
+
+            if (
+                Phaser.Geom.Intersects.RectangleToRectangle(
+                    pandaBox,
+                    bananaBox
+                )
+            ) {
+
+                // Mark only this banana as collected.
+                item.collected = true;
+
+                // Hide this banana and its glow trail.
+                item.container.setVisible(false);
+
+                console.log(
+                    'Storm Rescue Golden Banana collected:',
+                    item.id
+                );
+
+                // Reuse existing Banana API puzzle.
+                this.openGoldenBananaPuzzle();
+
+                // One puzzle per collection event.
+                break;
+            }
+        }
+    }
 
 
     openGoldenBananaPuzzle() {
@@ -1354,10 +1565,22 @@ export default class GameplayScene extends Phaser.Scene {
             return;
         }
 
-        // STORM RESCUE LEVEL ROUTING
-
+        // Storm Rescue 1/3
         if (mainLevel === 3 && sublevel === 1) {
             this.createStormRescueLevel1Islands();
+            return;
+        }
+
+        // Storm Rescue 2/3
+        if (mainLevel === 3 && sublevel === 2) {
+            this.createStormRescueLevel2Islands();
+            return;
+        }
+
+        // STORM RESCUE 3/3
+
+        if (mainLevel === 3 && sublevel === 3) {
+            this.createStormRescueLevel3Islands();
             return;
         }
 
@@ -2545,6 +2768,497 @@ const windyLevel1Layout = [
     }
 
 
+
+    // STORM RESCUE LEVEL 2/3: ISLAND ENVIRONMENT
+
+
+    createStormRescueLevel2Islands() {
+
+        const { width, height } = this.scale;
+
+        // Separate World 3 Level 2 collections
+        this.gameplayIslands = [];
+        this.blockingIslands = [];
+        this.movingIslands = [];
+        this.rescueIslands = [];
+
+        // STORM RESCUE 2/3 ISLAND LAYOUT
+
+        const stormLevel2Layout = [
+
+            // MOVING FLOATING ISLAND 1
+            {
+                key: 'stormFloatingIsland',
+                x: width * 0.85,
+                y: height * 0.59,
+                size: 0.20,
+                moving: true,
+                speed: 150
+            },
+
+            // RESCUE ISLAND 1: FOX
+            {
+                key: 'stormAnimalRescueIsland',
+                x: width * 1.45,
+                y: height * 0.45,
+                size: 0.28,
+                moving: false,
+                rescueAnimal: 'fox'
+            },
+
+            // STATIONARY ISLAND 1
+            {
+                key: 'stormStationaryIsland1',
+                x: width * 2.10,
+                y: height * 0.76,
+                size: 0.46,
+                moving: false
+            },
+
+            // MOVING FLOATING ISLAND 2
+            {
+                key: 'stormFloatingIsland',
+                x: width * 2.75,
+                y: height * 0.19,
+                size: 0.20,
+                moving: true,
+                speed: 190
+            },
+
+            // RESCUE ISLAND 2: RABBIT
+            {
+                key: 'stormAnimalRescueIsland',
+                x: width * 3.35,
+                y: height * 0.62,
+                size: 0.28,
+                moving: false,
+                rescueAnimal: 'bunny'
+            },
+
+            // STATIONARY ISLAND 2
+            {
+                key: 'stormStationaryIsland2',
+                x: width * 3.95,
+                y: height * 0.35,
+                size: 0.45,
+                moving: false
+            },
+
+            // MOVING FLOATING ISLAND 3
+            {
+                key: 'stormFloatingIsland',
+                x: width * 4.40,
+                y: height * 0.75,
+                size: 0.20,
+                moving: true,
+                speed: 120
+            },
+
+            // RESCUE ISLAND 3: BABY CHEETAH
+            {
+                key: 'stormAnimalRescueIsland',
+                x: width * 5.05,
+                y: height * 0.40,
+                size: 0.28,
+                moving: false,
+                rescueAnimal: 'cheetah'
+            },
+
+            // STATIONARY ISLAND 3
+            {
+                key: 'stormStationaryIsland1',
+                x: width * 5.55,
+                y: height * 0.28,
+                size: 0.42,
+                moving: false
+            },
+
+            // MOVING FLOATING ISLAND 4
+            {
+                key: 'stormFloatingIsland',
+                x: width * 6.05,
+                y: height * 0.73,
+                size: 0.20,
+                moving: true,
+                speed: 125
+            }
+        ];
+
+        // CREATE ISLAND SPRITES
+
+        for (const islandData of stormLevel2Layout) {
+
+            if (!this.textures.exists(islandData.key)) {
+
+                console.warn(
+                    'Missing Storm Rescue texture:',
+                    islandData.key
+                );
+
+                continue;
+            }
+
+            const island = this.add.image(
+                islandData.x,
+                islandData.y,
+                islandData.key
+            );
+
+            const targetWidth =
+                width * islandData.size;
+
+            island.setScale(
+                targetWidth / island.width
+            );
+
+            island.setDepth(5);
+
+            // Register with existing systems
+            this.gameplayIslands.push(island);
+            this.blockingIslands.push(island);
+
+            // Rescue islands
+            if (islandData.rescueAnimal) {
+
+                this.rescueIslands.push({
+                    animalType: islandData.rescueAnimal,
+                    sprite: island
+                });
+            }
+
+            // Moving obstacles
+            if (islandData.moving) {
+
+                this.movingIslands.push({
+                    sprite: island,
+                    speed: islandData.speed,
+                    activated: false,
+                    finished: false
+                });
+            }
+        }
+
+        // STORM RESCUE 2/3 SAFE ISLAND
+
+        const safeIslandKey = 'safeIsland_3_2';
+
+        if (this.textures.exists(safeIslandKey)) {
+
+            this.safeIsland = this.add.image(
+                this.worldWidth - width * 0.37,
+                height * 0.53,
+                safeIslandKey
+            );
+
+            // Larger for three delivered animals
+            const safeIslandWidth = width * 0.66;
+
+            this.safeIsland.setScale(
+                safeIslandWidth / this.safeIsland.width
+            );
+
+            this.safeIsland.setDepth(5);
+
+            this.gameplayIslands.push(
+                this.safeIsland
+            );
+
+            // Safe Island is not a blocking obstacle.
+
+            // SAFE ISLAND SIGN
+
+            if (this.textures.exists('safeIslandSign')) {
+
+                this.safeIslandSign = this.add.image(
+                    this.safeIsland.x - width * 0.38,
+                    height * 0.30,
+                    'safeIslandSign'
+                );
+
+                this.safeIslandSign.setScale(
+                    (width * 0.10) /
+                    this.safeIslandSign.width
+                );
+
+                this.safeIslandSign.setDepth(6);
+
+                this.gameplayIslands.push(
+                    this.safeIslandSign
+                );
+            }
+
+        } else {
+
+            console.warn(
+                'Storm Rescue 2/3 Safe Island texture missing.'
+            );
+        }
+
+        // DEBUG INFORMATION
+
+        console.log(
+            'Storm Rescue 2/3 islands created:',
+            {
+                totalIslands: this.gameplayIslands.length,
+                movingIslands: this.movingIslands.length,
+                rescueIslands: this.rescueIslands.length,
+                worldWidth: this.worldWidth
+            }
+        );
+    }
+
+
+
+    // STORM RESCUE 3/3: ISLAND ENVIRONMENT
+
+    createStormRescueLevel3Islands() {
+
+        const { width, height } = this.scale;
+
+        this.gameplayIslands = [];
+        this.blockingIslands = [];
+        this.movingIslands = [];
+        this.rescueIslands = [];
+
+        const layout = [
+
+            // MOVING ISLAND 1
+            {
+                key: 'stormFloatingIsland',
+                x: 0.90,
+                y: 0.73,
+                size: 0.20,
+                moving: true,
+                speed: 125
+            },
+
+            // MONKEY RESCUE
+            {
+                key: 'stormAnimalRescueIsland',
+                x: 1.45,
+                y: 0.37,
+                size: 0.28,
+                rescueAnimal: 'monkey'
+            },
+
+            // STATIONARY ISLAND 1
+            {
+                key: 'stormStationaryIsland1',
+                x: 2.05,
+                y: 0.70,
+                size: 0.43
+            },
+
+            // MOVING ISLAND 2
+            {
+                key: 'stormFloatingIsland',
+                x: 2.65,
+                y: 0.29,
+                size: 0.20,
+                moving: true,
+                speed: 135
+            },
+
+            // FOX RESCUE
+            {
+                key: 'stormAnimalRescueIsland',
+                x: 3.15,
+                y: 0.64,
+                size: 0.28,
+                rescueAnimal: 'fox'
+            },
+
+            // STATIONARY ISLAND 2
+            {
+                key: 'stormStationaryIsland2',
+                x: 3.70,
+                y: 0.29,
+                size: 0.44
+            },
+
+            // MOVING ISLAND 3
+            {
+                key: 'stormFloatingIsland',
+                x: 4.30,
+                y: 0.73,
+                size: 0.20,
+                moving: true,
+                speed: 140
+            },
+
+            // CHEETAH RESCUE
+            {
+                key: 'stormAnimalRescueIsland',
+                x: 4.95,
+                y: 0.36,
+                size: 0.28,
+                rescueAnimal: 'cheetah'
+            },
+
+            // STATIONARY ISLAND 3
+            {
+                key: 'stormStationaryIsland1',
+                x: 5.55,
+                y: 0.72,
+                size: 0.42
+            },
+
+            // MOVING ISLAND 4
+            {
+                key: 'stormFloatingIsland',
+                x: 6.12,
+                y: 0.30,
+                size: 0.20,
+                moving: true,
+                speed: 145
+            },
+
+            // RABBIT RESCUE
+            {
+                key: 'stormAnimalRescueIsland',
+                x: 6.70,
+                y: 0.62,
+                size: 0.28,
+                rescueAnimal: 'bunny'
+            },
+
+            // STATIONARY ISLAND 4
+            {
+                key: 'stormStationaryIsland2',
+                x: 7.25,
+                y: 0.29,
+                size: 0.42
+            },
+
+            // MOVING ISLAND 5
+            {
+                key: 'stormFloatingIsland',
+                x: 7.75,
+                y: 0.72,
+                size: 0.20,
+                moving: true,
+                speed: 150
+            }
+        ];
+
+        // =====================================
+        // CREATE ALL GAMEPLAY ISLANDS
+        // =====================================
+
+        for (const config of layout) {
+
+            if (!this.textures.exists(config.key)) {
+                console.warn(
+                    'Missing island texture:',
+                    config.key
+                );
+                continue;
+            }
+
+            const island = this.add.image(
+                width * config.x,
+                height * config.y,
+                config.key
+            );
+
+            island.setScale(
+                (width * config.size) / island.width
+            );
+
+            island.setDepth(5);
+
+            this.gameplayIslands.push(island);
+            this.blockingIslands.push(island);
+
+            if (config.rescueAnimal) {
+
+                this.rescueIslands.push({
+                    animalType: config.rescueAnimal,
+                    sprite: island
+                });
+            }
+
+            if (config.moving) {
+
+                this.movingIslands.push({
+                    sprite: island,
+                    speed: config.speed,
+                    activated: false,
+                    finished: false
+                });
+            }
+        }
+
+        // =====================================
+        // SAFE ISLAND
+        // =====================================
+
+        const safeKey = 'safeIsland_3_3';
+
+        if (!this.textures.exists(safeKey)) {
+            console.error(
+                'Storm Rescue 3/3 Safe Island missing.'
+            );
+            return;
+        }
+
+        this.safeIsland = this.add.image(
+            this.worldWidth - width * 0.40,
+            height * 0.53,
+            safeKey
+        );
+
+        // Slightly wider for four animals
+        const targetWidth = width * 0.72;
+
+        this.safeIsland.setScale(
+            targetWidth / this.safeIsland.width
+        );
+
+        this.safeIsland.setDepth(5);
+        this.gameplayIslands.push(this.safeIsland);
+
+        // Safe Island is not a collision obstacle.
+
+        // =====================================
+        // SAFE ISLAND SIGN
+        // =====================================
+
+        if (this.textures.exists('safeIslandSign')) {
+
+            this.safeIslandSign = this.add.image(
+                this.safeIsland.x - width * 0.42,
+                height * 0.29,
+                'safeIslandSign'
+            );
+
+            this.safeIslandSign.setScale(
+                (width * 0.10) /
+                this.safeIslandSign.width
+            );
+
+            this.safeIslandSign.setDepth(6);
+
+            this.gameplayIslands.push(
+                this.safeIslandSign
+            );
+        }
+
+        console.log(
+            'Storm Rescue 3/3 islands created:',
+            {
+                movingIslands: this.movingIslands.length,
+                rescueIslands: this.rescueIslands.length,
+                totalIslandSprites:
+                    this.gameplayIslands.length,
+                worldWidth: this.worldWidth
+            }
+        );
+    }
+
+
+
+
         // COLLISION RECTANGLES
          // The original PNGs contain transparent areas.
 
@@ -3018,10 +3732,93 @@ const windyLevel1Layout = [
             currentMainLevel === 3 &&
             currentSublevel === 1;
 
+        // STORM RESCUE 2/3
 
-        const animalConfigs = isStormLevel1
+        const isStormLevel2 =
+            currentMainLevel === 3 &&
+            currentSublevel === 2;
+        //STORM RESCUE 3/3
+        const isStormLevel3 =
+            currentMainLevel === 3 &&
+            currentSublevel === 3;
+
+
+        const animalConfigs = isStormLevel3
+            ? [
+                // STORM RESCUE 3/3: FOUR ANIMALS
+
+                // MONKEY
+                {
+                    id: 'monkey-storm-3',
+                    type: 'monkey',
+                    texture: 'monkeyWorried',
+                    happyFaceKey: 'monkeyHappyFace',
+                    widthRatio: 0.065
+                },
+
+                // FOX
+                {
+                    id: 'fox-storm-3',
+                    type: 'fox',
+                    texture: 'foxWorried',
+                    happyFaceKey: 'foxHappyFace',
+                    widthRatio: 0.070
+                },
+
+                // CHEETAH
+                {
+                    id: 'cheetah-storm-3',
+                    type: 'cheetah',
+                    texture: 'cheetahWorried',
+                    happyFaceKey: 'cheetahHappyFace',
+                    widthRatio: 0.070
+                },
+
+                // RABBIT
+                {
+                    id: 'bunny-storm-3',
+                    type: 'bunny',
+                    texture: 'bunnyWorried',
+                    happyFaceKey: 'bunnyHappyFace',
+                    widthRatio: 0.060
+                }
+            ]
+
+            : isStormLevel2
+            ? [
+                    // STORM RESCUE 2/3
+
+
+                    // BABY FOX
+                {
+                    id: 'fox-storm-2',
+                    type: 'fox',
+                    texture: 'foxWorried',
+                    happyFaceKey: 'foxHappyFace',
+                    widthRatio: 0.075
+                },
+
+                // BABY RABBIT
+                {
+                    id: 'bunny-storm-2',
+                    type: 'bunny',
+                    texture: 'bunnyWorried',
+                    happyFaceKey: 'bunnyHappyFace',
+                    widthRatio: 0.065
+                },
+
+                // BABY CHEETAH
+                {
+                    id: 'cheetah-storm-2',
+                    type: 'cheetah',
+                    texture: 'cheetahWorried',
+                    happyFaceKey: 'cheetahHappyFace',
+                    widthRatio: 0.075
+                }
+            ]
+
+            : isStormLevel1
                 ? [
-
                 // STORM RESCUE 1/3: FOX AND RABBIT
 
                 // BABY FOX
@@ -3585,18 +4382,26 @@ const windyLevel1Layout = [
 
     // STORM RESCUE 1/3: PURPLE BAT OBSTACLES
 
+
+    // ==========================================
+    // STORM RESCUE: PURPLE BAT OBSTACLES
+    // ==========================================
+
     createStormBatObstacles() {
 
         const mainLevel = Number(this.mainLevelId);
         const sublevel = Number(this.sublevelId);
 
-        // Only Storm Rescue 1/3
-        if (mainLevel !== 3 || sublevel !== 1) {
+        // Reset the bat collection
+        this.stormBatObstacles = [];
+
+        // Only Storm Rescue 1/3 and 2/3
+        if (
+            mainLevel !== 3 ||
+            ![1, 2,3].includes(sublevel)
+        ) {
             return;
         }
-
-        // Initialize collection
-        this.stormBatObstacles = [];
 
         if (!this.textures.exists('stormBat')) {
             console.warn('Storm bat texture is missing.');
@@ -3605,122 +4410,170 @@ const windyLevel1Layout = [
 
         const { width, height } = this.scale;
 
-        // Two bats along the extended storm journey.
-        const batPositions = [
-            {
-                x: 2.10,
-                y: 0.53,
-                speed: 160
-            },
-            {
-                x: 3.85,
-                y: 0.54,
-                speed: 140
-            }
+        // =====================================
+        // BAT POSITIONS BY SUBLEVEL
+        // =====================================
+
+
+const batPositions = sublevel === 1
+    ? [
+        // STORM RESCUE 1/3
+        { x: 2.10, y: 0.43, speed: 125 },
+        { x: 3.85, y: 0.54, speed: 140 }
+    ]
+
+    : sublevel === 2
+        ? [
+            // STORM RESCUE 2/3
+            { x: 1.90, y: 0.43, speed: 125 },
+            { x: 3.65, y: 0.55, speed: 140 },
+            { x: 5.70, y: 0.38, speed: 150 }
+        ]
+
+        : [
+            // STORM RESCUE 3/3
+            { x: 1.95, y: 0.53, speed: 135 },
+            { x: 3.80, y: 0.44, speed: 145 },
+            { x: 5.65, y: 0.57, speed: 150 },
+            { x: 7.40, y: 0.40, speed: 160 }
         ];
 
-        this.stormBatObstacles = batPositions.map(config => {
 
-            const bat = this.add.image(
-                width * config.x,
-                height * config.y,
-                'stormBat'
-            );
+        // =====================================
+        // CREATE BAT SPRITES
+        // =====================================
 
-            // Preserve image proportions.
-            const targetWidth = width * 0.085;
+        this.stormBatObstacles = batPositions.map(
+            config => {
 
-            bat.setScale(targetWidth / bat.width);
+                const bat = this.add.image(
+                    width * config.x,
+                    height * config.y,
+                    'stormBat'
+                );
 
-            bat.setDepth(15);
+                // Keep existing bat artwork size
+                const targetWidth = width * 0.085;
 
-            return {
-                sprite: bat,
-                speed: config.speed,
-                active: false,
-                finished: false
-            };
-        });
+                bat.setScale(
+                    targetWidth / bat.width
+                );
+
+                bat.setDepth(15);
+
+                return {
+                    sprite: bat,
+                    speed: config.speed,
+                    active: false,
+                    finished: false
+                };
+            }
+        );
 
         console.log(
-            'Storm Rescue 1/3 bats created:',
+            `Storm Rescue ${sublevel}/3 bats created:`,
             this.stormBatObstacles.length
         );
     }
 
 
 
+
     // STORM RESCUE 1/3: STORM CLOUD OBSTACLES
+
+
+
+    // STORM RESCUE: STORM CLOUD OBSTACLES
+
 
     createStormCloudObstacles() {
 
         const mainLevel = Number(this.mainLevelId);
         const sublevel = Number(this.sublevelId);
 
-        // Only Storm Rescue 1/3
-        if (mainLevel !== 3 || sublevel !== 1) {
+        // Reset the storm cloud collection
+        this.stormCloudObstacles = [];
+
+        // Only Storm Rescue 1/3 and 2/3
+        if (
+            mainLevel !== 3 ||
+            ![1, 2,3].includes(sublevel)
+        ) {
             return;
         }
 
-        // Initialize storm cloud collection
-        this.stormCloudObstacles = [];
-
-        // Check the image is loaded
         if (!this.textures.exists('stormCloud')) {
-            console.warn('Storm cloud texture is missing.');
+            console.warn(
+                'Storm cloud texture is missing.'
+            );
             return;
         }
 
         const { width, height } = this.scale;
 
-        // TWO STORM CLOUD POSITIONS
+        // STORM CLOUD POSITIONS BY SUBLEVEL
 
 
-        const cloudPositions = [
-            {
-                x: 2.55,
-                y: 0.35,
-                speed: 65
-            },
-            {
-                x: 4.20,
-                y: 0.48,
-                speed: 150
-            }
+const cloudPositions = sublevel === 1
+    ? [
+        // STORM RESCUE 1/3
+        { x: 2.55, y: 0.35, speed: 65 },
+        { x: 4.20, y: 0.48, speed: 80 }
+    ]
+
+    : sublevel === 2
+        ? [
+            // STORM RESCUE 2/3
+            { x: 2.40, y: 0.32, speed: 65 },
+            { x: 4.35, y: 0.48, speed: 80 },
+            { x: 5.95, y: 0.35, speed: 90 }
+        ]
+
+        : [
+            // STORM RESCUE 3/3
+            { x: 2.35, y: 0.33, speed: 75 },
+            { x: 4.05, y: 0.57, speed: 85 },
+            { x: 5.85, y: 0.34, speed: 90 },
+            { x: 7.60, y: 0.56, speed: 95 }
         ];
+
 
         // CREATE STORM CLOUD SPRITES
 
-        this.stormCloudObstacles = cloudPositions.map(config => {
 
-            const cloud = this.add.image(
-                width * config.x,
-                height * config.y,
-                'stormCloud'
-            );
+        this.stormCloudObstacles = cloudPositions.map(
+            config => {
 
-            // Storm cloud artwork size
-            const targetWidth = width * 0.13;
+                const cloud = this.add.image(
+                    width * config.x,
+                    height * config.y,
+                    'stormCloud'
+                );
 
-            cloud.setScale(
-                targetWidth / cloud.width
-            );
+                // Keep existing storm cloud size
+                const targetWidth = width * 0.13;
 
-            cloud.setDepth(14);
+                cloud.setScale(
+                    targetWidth / cloud.width
+                );
 
-            return {
-                sprite: cloud,
-                speed: config.speed,
-                active: false,
-                finished: false
-            };
-        });
+                cloud.setDepth(14);
+
+                return {
+                    sprite: cloud,
+                    speed: config.speed,
+                    active: false,
+                    finished: false
+                };
+            }
+        );
 
         console.log(
-            'Storm Rescue 1/3 storm clouds created:',
+            `Storm Rescue ${sublevel}/3 storm clouds created:`,
             this.stormCloudObstacles.length
         );
     }
+
 
 
 
@@ -4215,72 +5068,76 @@ const windyLevel1Layout = [
 
         // KEEP ANIMALS INSIDE BALLOON
 
-        updateCarriedAnimalFaces() {
 
-            if (
-                !this.carriedAnimalFaces ||
-                this.carriedAnimalFaces.length === 0
-            ) {
-                return;
-            }
+    updateCarriedAnimalFaces() {
 
-            const basket = this.getBalloonBasketPosition();
+        if (
+            !this.carriedAnimalFaces ||
+            this.carriedAnimalFaces.length === 0
+        ) {
+            return;
+        }
 
-            this.carriedAnimalFaces.forEach(
-                (face, index) => {
+        const basket = this.getBalloonBasketPosition();
 
-                    let offsetX;
+        const mainLevel = Number(this.mainLevelId);
+        const sublevel = Number(this.sublevelId);
 
-            if (this.requiredRescues === 3) {
+        const isStormLevel1 =
+            mainLevel === 3 && sublevel === 1;
 
-            const isWindyLevel3 =
-                Number(this.mainLevelId) === 2 &&
-                Number(this.sublevelId) === 3;
+        const isStormLevel2 =
+            mainLevel === 3 && sublevel === 2;
 
-            const level3Offsets = isWindyLevel3
-                ? [
-                    -0.10, // giraffe
-                    0.08, // cow
-                    0.24  // elephant
-                ]
-                : [
-                    -0.10, // monkey
-                    0.08, // elephant
-                    0.22  // bunny
-                ];
+        const isStormLevel3 =
+            mainLevel === 3 && sublevel === 3;
 
-            offsetX = level3Offsets[index] ?? 0;
+        const isWindyLevel3 =
+            mainLevel === 2 && sublevel === 3;
 
-            } else if (this.requiredRescues > 1) {
+        this.carriedAnimalFaces.forEach((face, index) => {
 
-            const isStormLevel1 =
-                Number(this.mainLevelId) === 3 &&
-                Number(this.sublevelId) === 1;
+            let offsetX = 0.17;
+
+            if (isStormLevel3) {
+
+                // Monkey, Fox, Cheetah, Rabbit
+                const offsets = [
+                -0.15,
+                -0.04,
+                 0.09,
+                 0.22
+            ];
+
+            offsetX = offsets[index] ?? 0;
+
+        } else if (this.requiredRescues === 3) {
+
+            const offsets = isStormLevel2
+                ? [-0.10, 0.08, 0.24]
+                : isWindyLevel3
+                    ? [-0.10, 0.08, 0.24]
+                    : [-0.10, 0.08, 0.22];
+
+            offsetX = offsets[index] ?? 0;
+
+        } else if (this.requiredRescues > 1) {
 
             offsetX = isStormLevel1
-                ? [0.02, 0.24][index] ?? 0.02
+                ? ([0.02, 0.24][index] ?? 0.02)
                 : 0.02 + index * 0.25;
-
-        } else {
-
-            offsetX = 0.17;
         }
 
-                    const faceX =
-                        basket.x +
-                        this.pandaWidth * offsetX;
+        const faceX =
+            basket.x + this.pandaWidth * offsetX;
 
-                    const faceY =
-                        basket.y -
-                        this.pandaHeight * 0.12;
+        const faceY =
+            basket.y - this.pandaHeight * 0.12;
 
-                    face.setPosition(
-                        faceX,
-                        faceY
-                    );
-                }
-            );
-        }
+        face.setPosition(faceX, faceY);
+    });
+}
+
 
 
         checkSafeIslandLanding() {
@@ -4297,13 +5154,27 @@ const windyLevel1Layout = [
                 mainLevel === 2 &&
                 [1, 2,3].includes(sublevel);
 
-            const isStormLevel1 = mainLevel === 3 && sublevel === 1;
 
+            const isStormLevel1 =
+                mainLevel === 3 &&
+                sublevel === 1;
+
+            const isStormLevel2 =
+                mainLevel === 3 &&
+                sublevel === 2;
+
+            const isStormLevel3 =
+                mainLevel === 3 &&
+                sublevel === 3;
+
+            // Enable Storm Rescue 1/3 and 2/3 landing.
             if (
-                !isSunnySkies && !isWindyHeights && !isStormLevel1
+                !isSunnySkies && !isWindyHeights && !isStormLevel1 && !isStormLevel2 && !isStormLevel3
             ) {
                 return;
             }
+
+
             if (
                 !this.gameplayStarted || this.isGamePaused ||this.isLandingSequencePlaying ||this.levelCompleted || this.isGameOver ||!this.safeIsland
             ) {
@@ -4321,42 +5192,48 @@ const windyLevel1Layout = [
 
             // LANDING POSITION FOR ALL IMPLEMENTED LEVELS
 
-        const isLevel2 =
-            mainLevel === 1 && sublevel === 2;
+            const isLevel2 =
+                mainLevel === 1 && sublevel === 2;
 
-        const isLevel3 =
-            mainLevel === 1 && sublevel === 3;
+            const isLevel3 =
+                mainLevel === 1 && sublevel === 3;
 
-        const isWindyLevel1 =
-            mainLevel === 2 && sublevel === 1;
+            const isWindyLevel1 =
+                mainLevel === 2 && sublevel === 1;
 
-        const isWindyLevel2 =
-            mainLevel === 2 && sublevel === 2;
+            const isWindyLevel2 =
+                mainLevel === 2 && sublevel === 2;
 
-        const isWindyLevel3 =
-            mainLevel === 2 && sublevel === 3;
+            const isWindyLevel3 =
+                mainLevel === 2 && sublevel === 3;
 
-        const landingX =
-            this.safeIsland.x +
-            this.safeIsland.displayWidth * (
-                isStormLevel1 ? 0.0 :
-                isWindyLevel3 ? 0.02 :
-                isWindyLevel2 ? 0.02 :
-                isWindyLevel1 ? 0.0 :
-                isLevel3 ? 0.03 :
-                isLevel2 ? -0.02 : -0.05
+
+            const landingX =
+                this.safeIsland.x +
+                this.safeIsland.displayWidth * (
+                    isStormLevel3 ? 0.0 :
+                    isStormLevel2 ? 0.0 :
+                    isStormLevel1 ? 0.0 :
+                    isWindyLevel3 ? 0.02 :
+                    isWindyLevel2 ? 0.02 :
+                    isWindyLevel1 ? 0.0 :
+                    isLevel3 ? 0.03 :
+                    isLevel2 ? -0.02 : -0.05
             );
 
-        const landingY =
-            this.safeIsland.y +
-            this.safeIsland.displayHeight * (
-                isStormLevel1 ? -0.04 :
-                isWindyLevel3 ? -0.04 :
-                isWindyLevel2 ? -0.06 :
-                isWindyLevel1 ? -0.06 :
-                isLevel3 ? 0.055 :
-                isLevel2 ? -0.12 : -0.08
+            const landingY =
+               this.safeIsland.y +
+                this.safeIsland.displayHeight * (
+                    isStormLevel3 ? -0.04 :
+                    isStormLevel2 ? -0.04 :
+                    isStormLevel1 ? -0.04 :
+                    isWindyLevel3 ? -0.04 :
+                    isWindyLevel2 ? -0.06 :
+                    isWindyLevel1 ? -0.06 :
+                    isLevel3 ? 0.055 :
+                    isLevel2 ? -0.12 : -0.08
             );
+
             // Use the existing balloon basket position,
             // not the center of the full panda image.
             const basket =
@@ -4590,6 +5467,12 @@ const windyLevel1Layout = [
             const isStormLevel1 =
                 Number(this.mainLevelId) === 3 && Number(this.sublevelId) === 1;
 
+            const isStormLevel2 =
+                Number(this.mainLevelId) === 3 && Number(this.sublevelId) === 2;
+
+            const isStormLevel3 =
+                Number(this.mainLevelId) === 3 && Number(this.sublevelId) === 3;
+
             const rescuedAnimals =
                 this.rescueAnimals.filter(
                     animal => animal.rescued
@@ -4605,18 +5488,24 @@ const windyLevel1Layout = [
 
             // SELECT DELIVERED ANIMAL TEXTURE
 
+
 const safeTexture =
-    animal.type === 'fox'
-        ? 'foxSafe'
-        : animal.type === 'giraffe'
-            ? 'giraffeSafe'
-            : animal.type === 'cow'
-                ? 'cowSafe'
-                : animal.type === 'elephant'
-                    ? 'elephantSafe'
-                    : animal.type === 'bunny'
-                        ? 'bunnySafe'
-                        : 'monkeySafe';
+    animal.type === 'monkey'
+        ? 'monkeySafe'
+        : animal.type === 'fox'
+            ? 'foxSafe'
+            : animal.type === 'cheetah'
+                ? 'cheetahSafe'
+                : animal.type === 'bunny'
+                    ? 'bunnySafe'
+                    : animal.type === 'giraffe'
+                        ? 'giraffeSafe'
+                        : animal.type === 'cow'
+                            ? 'cowSafe'
+                            : animal.type === 'elephant'
+                                ? 'elephantSafe'
+                                : 'monkeySafe';
+
 
                 if (!this.textures.exists(safeTexture)) {
                     console.warn(
@@ -4640,23 +5529,57 @@ const safeTexture =
                 elephant: 0.27
             };
 
-            const xOffset = isStormLevel1
-                ? (animal.type === 'fox' ? -0.17 : 0.18)
-                : isWindyLevel3
-                     ? (windyLevel3Offsets[animal.type] ?? 0)
+
+            const stormLevel2Offsets = {
+                fox: -0.13,
+                bunny: 0.11,
+                cheetah: 0.21
+            };
+
+            const stormLevel3Offsets = {
+                monkey: -0.17,
+                fox: -0.08,
+                cheetah: 0.09,
+                bunny: 0.17
+            };
+
+            const xOffset = isStormLevel3
+                ? (stormLevel3Offsets[animal.type] ?? 0)
+                : isStormLevel2
+                    ? (stormLevel2Offsets[animal.type] ?? 0)
+                    : isStormLevel1
+                    ? (animal.type === 'fox' ? -0.17 : 0.18)
+                    : isWindyLevel3
+                        ? (windyLevel3Offsets[animal.type] ?? 0)
                         : isWindyLevel2
                             ? (animal.type === 'giraffe' ? -0.19 : 0.20)
-                                : isWindyLevel1
-                                    ? 0.17
-                                    : isLevel3
-                                        ? (level3Offsets[index] ?? 0)
-                                        : isLevel2
-                                            ? (index === 0 ? -0.16 : 0.14)
-                                            : -0.24;
+                            : isWindyLevel1
+                                ? 0.17
+                                : isLevel3
+                                    ? (level3Offsets[index] ?? 0)
+                                    : isLevel2
+                                        ? (index === 0 ? -0.16 : 0.14)
+                                        : -0.24;
 
-            const yOffset = isStormLevel1
+            const stormLevel3YOffsets = {
+                monkey: 0.015,
+                fox: 0.02,
+                cheetah: 0.025,
+                bunny: 0.02
+            };
+
+
+
+        const yOffset = isStormLevel3
+            ? (stormLevel3YOffsets[animal.type] ?? 0.02)
+            :isStormLevel2
+                ?(
+                animal.type === 'fox' ? 0.02 :
+                animal.type === 'bunny' ? 0.015 : 0.02
+            )
+            : isStormLevel1
                 ? 0.02
-                    : isWindyLevel3
+                : isWindyLevel3
                     ? (
                         animal.type === 'giraffe' ? 0.01 :
                         animal.type === 'cow' ? 0.015 : 0.02
@@ -4671,6 +5594,7 @@ const safeTexture =
                                     ? 0.065
                                     : -0.04;
 
+
                     const deliveredSprite = this.add.image(
                     this.safeIsland.x +
                         this.safeIsland.displayWidth * xOffset,
@@ -4679,23 +5603,39 @@ const safeTexture =
                     safeTexture
                 );
 
+                const stormLevel3Sizes = {
+                    monkey: 0.085,
+                    fox: 0.090,
+                    cheetah: 0.090,
+                    bunny: 0.078
+                };
                 // Level 3 animals should fit together.
-                const sizeRatio = isStormLevel1
+
+        const sizeRatio = isStormLevel3
+            ? (stormLevel3Sizes[animal.type] ?? 0.085)
+            :isStormLevel2
+                ? (
+                    animal.type === 'fox' ? 0.10 :
+                    animal.type === 'bunny' ? 0.088 :
+                    0.098
+                )
+                : isStormLevel1
                     ? (animal.type === 'fox' ? 0.12 : 0.11)
-                        : isWindyLevel3
-                    ? (
-                        animal.type === 'giraffe' ? 0.11 :
-                        animal.type === 'cow' ? 0.105 : 0.12
-                    )
+                    : isWindyLevel3
+                        ? (
+                            animal.type === 'giraffe' ? 0.11 :
+                            animal.type === 'cow' ? 0.105 : 0.12
+                        )
                     : isWindyLevel2
-                        ? (animal.type === 'giraffe' ? 0.12 : 0.13)
-                        : isWindyLevel1
-                            ? 0.125
-                            : isLevel3
-                                ? (animal.type === 'elephant' ? 0.11 : 0.09)
-                                : isLevel2
-                                    ? (animal.type === 'elephant' ? 0.14 : 0.12)
-                                    : 0.13;
+                            ? (animal.type === 'giraffe' ? 0.12 : 0.13)
+                            : isWindyLevel1
+                                ? 0.125
+                                : isLevel3
+                                    ? (animal.type === 'elephant' ? 0.11 : 0.09)
+                                       : isLevel2
+                                       ? (animal.type === 'elephant' ? 0.14 : 0.12)
+                                       : 0.13;
+
 
 
                 deliveredSprite.setScale(
@@ -4708,7 +5648,9 @@ const safeTexture =
                 deliveredSprite.setOrigin(0.5, 1);
 
                 deliveredSprite.setDepth(
-                    (isLevel3 || isWindyLevel3) ? 18 : 22
+                    (isLevel3 || isWindyLevel3 || isStormLevel2  || isStormLevel3)
+                        ? 18
+                        : 22
                 );
 
 
@@ -4720,9 +5662,11 @@ const safeTexture =
             });
 
             const regionName =
-                Number(this.mainLevelId) === 2
-                    ? 'Windy Heights'
-                    : 'Sunny Skies';
+                Number(this.mainLevelId) === 3
+                    ? 'Storm Rescue'
+                    : Number(this.mainLevelId) === 2
+                        ? 'Windy Heights'
+                        : 'Sunny Skies';
 
             console.log(
                 `${regionName} ${this.sublevelId}/3: ` +
