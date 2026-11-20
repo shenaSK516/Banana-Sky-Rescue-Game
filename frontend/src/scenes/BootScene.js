@@ -685,6 +685,120 @@ export default class BootScene extends Phaser.Scene {
             '/assets/gameplay/animals/cheetah/cheetah-safe.png'
         );
 
+        //RAINBOW VALLEY ASSETS
+
+        this.load.image(
+            'rainbowValleySeamlessV1',
+            '/assets/gameplay/backgrounds/rainbow-valley-seamless.png'
+        );
+        this.load.image(
+            'rainbowStationary1',
+            'assets/gameplay/islands/common/rainbowStationary1.png'
+        );
+
+        this.load.image(
+            'rainbowStationary2',
+            'assets/gameplay/islands/common/rainbowStationary2.png'
+        );
+
+        this.load.image(
+            'rainbowStationary3',
+             'assets/gameplay/islands/common/rainbowStationary3.png'
+        );
+
+        this.load.image(
+            'rainbowStationary4',
+            'assets/gameplay/islands/common/rainbowStationary4.png'
+        );
+
+        this.load.image(
+            'pinkCloudObstacle',
+             'assets/gameplay/obstacles/pinkCloudObstacle.png'
+            );
+
+        this.load.image(
+            'spinningToffeeObstacle',
+            'assets/gameplay/obstacles/spinningToffeeObstacle.png'
+        );
+
+        this.load.image(
+            'rainbowTornadoObstacle',
+            'assets/gameplay/obstacles/rainbowTornadoObstacle.png'
+        );
+
+        this.load.image(
+            'safeIsland_4_1',
+            'assets/gameplay/islands/safe-islands/rainbow-1.png'
+        );
+
+        this.load.image(
+            'safeIsland_4_2',
+            'assets/gameplay/islands/safe-islands/rainbow-2.png'
+        );
+
+        this.load.image(
+            'safeIsland_4_3',
+            'assets/gameplay/islands/safe-islands/rainbow-3.png'
+        );
+
+
+        // RAINBOW VALLEY: BABY DOG
+
+
+        this.load.image(
+            'dogHappyFace',
+            'assets/gameplay/animals/dog/dog-happy-face.png'
+        );
+
+        this.load.image(
+            'dogSafe',
+            'assets/gameplay/animals/dog/dog-safe.png'
+        );
+
+        this.load.image(
+            'dogWorried',
+            'assets/gameplay/animals/dog/dog-worried.png'
+        );
+
+
+
+        // RAINBOW VALLEY 2/3: REINDEER
+
+        this.load.image(
+            'reindeerWorried',
+            'assets/gameplay/animals/reindeer/reindeer-worried.png'
+        );
+
+        this.load.image(
+            'reindeerSafe',
+            'assets/gameplay/animals/reindeer/reindeer-safe.png'
+        );
+
+        this.load.image(
+            'reindeerHappyFace',
+            'assets/gameplay/animals/reindeer/reindeer-happy-face.png'
+        );
+
+
+        // RAINBOW VALLEY 2/3: UNICORN
+
+        this.load.image(
+            'unicornWorried',
+            'assets/gameplay/animals/unicorn/unicorn-worried.png'
+        );
+
+        this.load.image(
+            'unicornSafe',
+            'assets/gameplay/animals/unicorn/unicorn-safe.png'
+        );
+
+        this.load.image(
+            'unicornHappyFace',
+            'assets/gameplay/animals/unicorn/unicorn-happy-face.png'
+        );
+
+
+
 
 
     }

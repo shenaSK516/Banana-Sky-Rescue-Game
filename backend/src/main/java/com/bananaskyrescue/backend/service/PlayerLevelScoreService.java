@@ -57,10 +57,15 @@ public class PlayerLevelScoreService {
                 sublevelId >= 1 &&
                 sublevelId <= 3;
 
-        // STORM RESCUE: 1/3, 2/3 AND 3/3
-
+        // STORM RESCUE: 1/3, 2/3, 3/3
         boolean isStormRescue =
                 mainLevelId == 3 &&
+                sublevelId >= 1 &&
+                sublevelId <= 3;
+
+        // RAINBOW VALLEY: 1/3, 2/3, 3/3
+        boolean isRainbowValley =
+                mainLevelId == 4 &&
                 sublevelId >= 1 &&
                 sublevelId <= 3;
 
@@ -68,7 +73,8 @@ public class PlayerLevelScoreService {
         if (
                 !isSunnySkies &&
                 !isWindyHeights &&
-                !isStormRescue
+                !isStormRescue &&
+                !isRainbowValley
         ) {
             throw new ResponseStatusException(
                     HttpStatus.BAD_REQUEST,
@@ -76,21 +82,47 @@ public class PlayerLevelScoreService {
             );
         }
 
+        // VALIDATE REQUIRED ANIMAL RESCUES
 
-        // REQUIRED ANIMAL RESCUES
 
-        // Sunny Skies:
-        // 1/3 = 1, 2/3 = 2, 3/3 = 3
+        // SUNNY SKIES:
+        // 1/3 = 1 animal
+        // 2/3 = 2 animals
+        // 3/3 = 3 animals
 
-        // Windy Heights:
-        // 1/3 = 1, 2/3 = 2, 3/3 = 3
+        // WINDY HEIGHTS:
+        // 1/3 = 1 animal
+        // 2/3 = 2 animals
+        // 3/3 = 3 animals
 
-        // Storm Rescue:
-        // 1/3 = 2, 2/3 = 3, 3/3 = 4
+        // STORM RESCUE:
+        // 1/3 = 2 animals
+        // 2/3 = 3 animals
+        // 3/3 = 4 animals
 
-        int requiredRescues = isStormRescue
-                ? sublevelId + 1
-                : sublevelId;
+        // RAINBOW VALLEY:
+        // 1/3 = 3 animals
+        // 2/3 = 3 animals
+        // 3/3 = 4 animals
+
+        int requiredRescues;
+
+        if (isRainbowValley) {
+
+            // Rainbow Valley 3/3 requires 4 rescues.
+            // Rainbow Valley 1/3 and 2/3 require 3.
+
+            requiredRescues =
+                    sublevelId == 3 ? 4 : 3;
+
+        } else if (isStormRescue) {
+
+            requiredRescues = sublevelId + 1;
+
+        } else {
+
+            requiredRescues = sublevelId;
+        }
 
         if (rescuedAnimals != requiredRescues) {
 
@@ -99,7 +131,6 @@ public class PlayerLevelScoreService {
                     "Incorrect number of rescued animals"
             );
         }
-
 
         // VALIDATE GAMEPLAY DURATION
 
@@ -111,7 +142,7 @@ public class PlayerLevelScoreService {
             );
         }
 
-        // VALIDATE REMAINING BANANA ENERGY
+        //VALIDATE REMAINING BANANA ENERGY
 
         if (remainingEnergy < 1 || remainingEnergy > 100) {
 
@@ -123,19 +154,27 @@ public class PlayerLevelScoreService {
 
         // CALCULATE SCORE ON BACKEND
 
+        // 100 points for each rescued animal.
         int rescuePoints = rescuedAnimals * 100;
+
+        // Time bonus decreases by 5 points
+        // per active second.
 
         int timeBonus = Math.max(
                 0,
                 500 - (5 * activeSeconds)
         );
 
+        // Remaining Banana Energy bonus.
         int energyBonus = remainingEnergy * 2;
 
+        // Final calculated level score.
         int calculatedScore =
-                rescuePoints + timeBonus + energyBonus;
+                rescuePoints +
+                timeBonus +
+                energyBonus;
 
-        //  FIND AUTHENTICATED PLAYER
+        //FIND AUTHENTICATED PLAYER
 
         Player player = playerRepository
                 .findByUsername(username)
@@ -148,7 +187,8 @@ public class PlayerLevelScoreService {
 
         // WINDY HEIGHTS UNLOCK VALIDATION
 
-        // Windy Heights 1/3 requires Sunny Skies 3/3.
+        // Windy Heights 1/3 requires
+        // Sunny Skies 3/3 completion.
 
         if (mainLevelId == 2 && sublevelId == 1) {
 
@@ -171,7 +211,8 @@ public class PlayerLevelScoreService {
 
         // STORM RESCUE UNLOCK VALIDATION
 
-        // Storm Rescue 1/3 requires Windy Heights 3/3.
+        // Storm Rescue 1/3 requires
+        // Windy Heights 3/3 completion.
 
         if (mainLevelId == 3 && sublevelId == 1) {
 
@@ -192,12 +233,31 @@ public class PlayerLevelScoreService {
             }
         }
 
+        // RAINBOW VALLEY UNLOCK VALIDATION
+
+        // Rainbow Valley 1/3 requires
+        // Storm Rescue 3/3 completion.
+
+        if (mainLevelId == 4 && sublevelId == 1) {
+
+            boolean stormRescueCompleted =
+                    progressRepository
+                            .existsByPlayer_IdAndMainLevelIdAndSublevelId(
+                                    player.getId(),
+                                    3,
+                                    3
+                            );
+
+            if (!stormRescueCompleted) {
+
+                throw new ResponseStatusException(
+                        HttpStatus.FORBIDDEN,
+                        "Complete Storm Rescue 3/3 before Rainbow Valley"
+                );
+            }
+        }
+
         // VALIDATE SUBLEVEL UNLOCKING
-
-        // Sublevel 2 requires Sublevel 1.
-        // Sublevel 3 requires Sublevel 2.
-
-        // This also validates Storm Rescue 2/3.
 
         if (sublevelId > 1) {
 
@@ -218,7 +278,8 @@ public class PlayerLevelScoreService {
             }
         }
 
-        // FIND EXISTING PERSONAL BEST
+        //FIND EXISTING PERSONAL BEST
+
 
         Optional<PlayerLevelScore> existingScore =
                 scoreRepository
@@ -235,7 +296,9 @@ public class PlayerLevelScoreService {
 
             scoreRecord = existingScore.get();
 
-            // Update only if the new score is better.
+            // Update only if the new score
+            // is better than the saved best.
+
             newPersonalBest = scoreRecord.updateBestScore(
                     calculatedScore,
                     rescuedAnimals,
@@ -245,7 +308,9 @@ public class PlayerLevelScoreService {
 
         } else {
 
-            // First successful completion.
+            // First successful completion
+            // of this sublevel.
+
             scoreRecord = new PlayerLevelScore(
                     player,
                     mainLevelId,
@@ -259,13 +324,22 @@ public class PlayerLevelScoreService {
             newPersonalBest = true;
         }
 
-        // SAVE PERSONAL BEST SCORE
+        // 12. SAVE PERSONAL BEST SCORE
+
+        // Save initial score or improved best.
+
 
         if (newPersonalBest) {
+
             scoreRepository.save(scoreRecord);
         }
 
-        // SAVE LEVEL COMPLETION PROGRESS
+        // 13. SAVE LEVEL COMPLETION PROGRESS
+
+        // Completion progress is separate
+        // from personal-best score.
+
+        // Avoid duplicate completion records.
 
         boolean alreadyCompleted =
                 progressRepository
@@ -287,8 +361,7 @@ public class PlayerLevelScoreService {
             progressRepository.save(completedLevel);
         }
 
-        //  RETURN SAVED SCORE RESULT
-
+        // RETURN SAVED SCORE RESULT
 
         return new SavedScore(
                 mainLevelId,

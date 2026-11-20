@@ -142,37 +142,33 @@ export default class GameplayScene extends Phaser.Scene {
 
         // Side-scrolling world
 
-        // Level 2 has a longer journey.
         const isSunnySkiesLevel2 =
-            Number(this.mainLevelId) === 1 &&
-            Number(this.sublevelId) === 2;
+            Number(this.mainLevelId) === 1 && Number(this.sublevelId) === 2;
 
-        // World length based on Sunny Skies sublevel.
         const currentSublevel = Number(this.sublevelId);
 
-       // WORLD WIDTH BASED ON REGION AND SUBLEVEL
+        const isStormRescue = Number(this.mainLevelId) === 3;
 
+        const isRainbowValley = Number(this.mainLevelId) === 4;
 
-        const isStormRescue =
-            Number(this.mainLevelId) === 3;
-
-
-            this.worldWidth = width * (
-            isStormRescue
+        this.worldWidth = width * (
+            isRainbowValley
                 ? (
-                    currentSublevel === 3 ? 9.0 :
+                    currentSublevel === 3 ? 8.5 :
                     currentSublevel === 2 ? 7.0 : 5.5
                 )
-                : (
-                    currentSublevel === 3 ? 6.0 :
-                    currentSublevel === 2 ? 4.8 : 4
-                )
+                : isStormRescue
+                    ? (
+                        currentSublevel === 3 ? 9.0 :
+                        currentSublevel === 2 ? 7.0 : 5.5
+                    )
+                    : (
+                        currentSublevel === 3 ? 6.0 :
+                        currentSublevel === 2 ? 4.8 : 4
+                    )
         );
 
-
-
-        this.worldHeight = height;
-
+       this.worldHeight = height;
 
         this.cameras.main.setBackgroundColor('#87CEEB');
 
@@ -189,11 +185,37 @@ export default class GameplayScene extends Phaser.Scene {
         this.createGameplayIslands();
 
 
+
         const currentMainLevel = Number(this.mainLevelId);
+
+
+
+
+        // RAINBOW VALLEY 3/3
+
+        if (
+            currentMainLevel === 4 &&
+            currentSublevel === 3
+        ) {
+            this.requiredRescues = 4;
+            this.createMultiRescueAnimals();
+
+        } else if
+
+        // RAINBOW VALLEY 1/3 AND 2/3
+
+        (
+            currentMainLevel === 4 &&
+            [1, 2].includes(currentSublevel)
+        ) {
+
+            this.requiredRescues = 3;
+            this.createMultiRescueAnimals();
+
 
         // STORM RESCUE
 
-        if (currentMainLevel === 3) {
+        } else if (currentMainLevel === 3) {
 
             this.requiredRescues =
                 currentSublevel === 3 ? 4 :
@@ -201,7 +223,7 @@ export default class GameplayScene extends Phaser.Scene {
 
             this.createMultiRescueAnimals();
 
-        // WINDY HEIGHTS
+        // WINDY HEIGHTS 1/3
 
         } else if (
             currentMainLevel === 2 &&
@@ -211,6 +233,7 @@ export default class GameplayScene extends Phaser.Scene {
             this.requiredRescues = 1;
             this.createWindyGiraffe();
 
+        // WINDY HEIGHTS 2/3 AND 3/3
         } else if (
             currentMainLevel === 2 &&
             [2, 3].includes(currentSublevel)
@@ -219,24 +242,26 @@ export default class GameplayScene extends Phaser.Scene {
             this.requiredRescues = currentSublevel;
             this.createMultiRescueAnimals();
 
-        // SUNNY SKIES
+        // SUNNY SKIES 2/3 AND 3/3
 
         } else if (
             currentMainLevel === 1 &&
             [2, 3].includes(currentSublevel)
         ) {
 
-        this.requiredRescues = currentSublevel;
-        this.createMultiRescueAnimals();
+            this.requiredRescues = currentSublevel;
+            this.createMultiRescueAnimals();
 
+        // SUNNY SKIES 1/3
         } else if (
             currentMainLevel === 1 &&
             currentSublevel === 1
         ) {
 
-        this.requiredRescues = 1;
-        this.createRescueMonkey();
-    }
+            this.requiredRescues = 1;
+            this.createRescueMonkey();
+        }
+
 
 
         // Create each system only ONCE.
@@ -245,6 +270,7 @@ export default class GameplayScene extends Phaser.Scene {
         this.createStormBatObstacles();
         this.createStormCloudObstacles();
         this.createWindGustObstacles();
+        this.createRainbowObstacles();
         this.createGoldenBanana();
 
         // GAMEPLAY BACKGROUND BASED ON MAIN LEVEL
@@ -252,11 +278,14 @@ export default class GameplayScene extends Phaser.Scene {
         const currentRegion = Number(this.mainLevelId);
 
         const backgroundKey =
-            currentRegion === 3
-                ? 'stormGameplayBackground'
-                : currentRegion === 2
-                    ? 'windyGameplayBackground'
-                    : 'sunnyGameplayBackground';
+            currentRegion === 4
+                ? 'rainbowValleySeamlessV1'
+                : currentRegion === 3
+                    ? 'stormGameplayBackground'
+                    : currentRegion === 2
+                        ? 'windyGameplayBackground'
+                        : 'sunnyGameplayBackground';
+
 
         const backgroundTexture =
             this.textures.get(backgroundKey);
@@ -535,12 +564,23 @@ export default class GameplayScene extends Phaser.Scene {
 
     createGoldenBanana() {
 
+
         if (
-            Number(this.mainLevelId) === 3 && Number(this.sublevelId) === 3
+            (
+                Number(this.mainLevelId) === 3 &&
+                Number(this.sublevelId) === 3
+            ) ||
+
+            (
+                Number(this.mainLevelId) === 4 &&
+                [1, 2,3].includes(Number(this.sublevelId))
+            )
+
         ) {
             this.createStormLevel3GoldenBananas();
             return;
         }
+
         const mainLevel = Number(this.mainLevelId);
         const sublevel = Number(this.sublevelId);
 
@@ -729,18 +769,74 @@ export default class GameplayScene extends Phaser.Scene {
 
         this.stormLevel3Bananas = [];
 
-        const positions = [
-            {
-                id: 'storm-banana-1',
-                x: width * 3.90,
-                y: height * 0.54
-            },
-            {
-                id: 'storm-banana-2',
-                x: width * 7.45,
-                y: height * 0.56
-            }
-        ];
+
+        const mainLevel = Number(this.mainLevelId);
+        const sublevel = Number(this.sublevelId);
+
+        const isRainbowLevel1 =
+            mainLevel === 4 && sublevel === 1;
+
+        const isRainbowLevel2 =
+            mainLevel === 4 && sublevel === 2;
+
+
+        const isRainbowLevel3 =
+            mainLevel === 4 && sublevel === 3;
+
+
+                const positions = isRainbowLevel3
+            ? [
+                {
+                    id: 'rainbow-3-banana-1',
+                    x: width * 2.65,
+                    y: height * 0.53
+                },
+                {
+                    id: 'rainbow-3-banana-2',
+                    x: width * 5.85,
+                    y: height * 0.57
+                }
+            ]
+            : isRainbowLevel2
+            ? [
+                {
+                    id: 'rainbow-2-banana-1',
+                    x: width * 2.45,
+                    y: height * 0.52
+                },
+                {
+                    id: 'rainbow-2-banana-2',
+                    x: width * 4.90,
+                    y: height * 0.58
+                }
+            ]
+            : isRainbowLevel1
+                ? [
+                    {
+                        id: 'rainbow-banana-1',
+                        x: width * 2.35,
+                        y: height * 0.52
+                    },
+                    {
+                        id: 'rainbow-banana-2',
+                        x: width * 4.10,
+                        y: height * 0.60
+                    }
+                ]
+                : [
+                    {
+                        id: 'storm-banana-1',
+                        x: width * 3.90,
+                        y: height * 0.54
+                    },
+                    {
+                        id: 'storm-banana-2',
+                        x: width * 7.45,
+                        y: height * 0.56
+                    }
+                ];
+
+
 
         if (!this.textures.exists('goldenBanana')) {
             console.error('Golden Banana texture missing.');
@@ -844,13 +940,23 @@ export default class GameplayScene extends Phaser.Scene {
 
     checkGoldenBananaCollection() {
 
+
         if (
-            Number(this.mainLevelId) === 3 &&
-            Number(this.sublevelId) === 3
+            (
+                Number(this.mainLevelId) === 3 &&
+                Number(this.sublevelId) === 3
+            ) ||
+
+            (
+                Number(this.mainLevelId) === 4 &&
+                [1, 2,3].includes(Number(this.sublevelId))
+            )
+
         ) {
-        this.checkStormLevel3Bananas();
+            this.checkStormLevel3Bananas();
             return;
         }
+
 
         // Only check during active gameplay.
         if (
@@ -1545,7 +1651,36 @@ export default class GameplayScene extends Phaser.Scene {
         const mainLevel = Number(this.mainLevelId);
         const sublevel = Number(this.sublevelId);
 
-        // WINDY HEIGHTS LEVEL ROUTING
+
+        // RAINBOW VALLEY 1/3
+
+        if (
+            mainLevel === 4 &&
+            sublevel === 1
+        ) {
+            this.createRainbowValleyLevel1Islands();
+            return;
+        }
+
+        // RAINBOW VALLEY 2/3
+
+        if (
+            mainLevel === 4 &&
+            sublevel === 2
+        ) {
+            this.createRainbowValleyLevel2Islands();
+            return;
+        }
+
+        // RAINBOW VALLEY 3/3
+
+        if (
+            mainLevel === 4 &&
+            sublevel === 3
+        ) {
+            this.createRainbowValleyLevel3Islands();
+            return;
+        }
 
         // Windy Heights 1/3
         if (mainLevel === 2 && sublevel === 1) {
@@ -1931,6 +2066,746 @@ export default class GameplayScene extends Phaser.Scene {
     );
 }
 
+
+
+    // ==========================================
+    // RAINBOW VALLEY 1/3: COMPLETE ENVIRONMENT
+    // ==========================================
+
+    createRainbowValleyLevel1Islands() {
+
+        const { width, height } = this.scale;
+
+        // Reset island collections
+        this.gameplayIslands = [];
+        this.blockingIslands = [];
+        this.movingIslands = [];
+        this.rescueIslands = [];
+
+        // ======================================
+        // LEVEL 1 ISLAND LAYOUT
+        // ======================================
+
+        const layout = [
+
+            // MOVING FLOATING ISLAND 1
+            {
+                key: 'floatingIsland',
+                x: 0.80,
+                y: 0.55,
+                size: 0.21,
+                moving: true,
+                speed: 100
+            },
+
+            // RESCUE ISLAND: BABY DOG
+            {
+                key: 'animalRescueIsland',
+                x: 1.30,
+                y: 0.49,
+                size: 0.25,
+                rescueAnimal: 'dog'
+            },
+
+            // RAINBOW STATIONARY ISLAND 1
+            {
+                key: 'rainbowStationary1',
+                x: 1.80,
+                y: 0.28,
+                size: 0.37
+            },
+
+            // MOVING FLOATING ISLAND 2
+            {
+                key: 'floatingIsland',
+                x: 2.05,
+                y: 0.76,
+                size: 0.20,
+                moving: true,
+                speed: 95
+            },
+
+            // RAINBOW STATIONARY ISLAND 2
+            {
+                key: 'rainbowStationary2',
+                x: 2.45,
+                y: 0.35,
+                size: 0.37
+            },
+
+            // RESCUE ISLAND: BABY ELEPHANT
+            {
+                key: 'animalRescueIsland',
+                x: 2.90,
+                y: 0.72,
+                size: 0.25,
+                rescueAnimal: 'elephant'
+            },
+
+            // MOVING FLOATING ISLAND 3
+            {
+                key: 'floatingIsland',
+                x: 3.20,
+                y: 0.77,
+                size: 0.20,
+                moving: true,
+                speed: 105
+            },
+
+            // RAINBOW STATIONARY ISLAND 3
+            {
+                key: 'rainbowStationary3',
+                x: 3.55,
+                y: 0.30,
+                size: 0.37
+            },
+
+            // RESCUE ISLAND: BABY GIRAFFE
+            {
+                key: 'animalRescueIsland',
+                x: 4.00,
+                y: 0.73,
+                size: 0.25,
+                rescueAnimal: 'giraffe'
+            },
+
+            // RAINBOW STATIONARY ISLAND 4
+            {
+                key: 'rainbowStationary4',
+                x: 4.50,
+                y: 0.70,
+                size: 0.37
+            },
+
+            // MOVING FLOATING ISLAND 4
+            {
+                key: 'floatingIsland',
+                x: 4.65,
+                y: 0.76,
+                size: 0.20,
+                moving: true,
+                speed: 115
+            }
+        ];
+
+        // CREATE ISLAND SPRITES
+
+        for (const config of layout) {
+
+            if (!this.textures.exists(config.key)) {
+                console.error(
+                    'Rainbow island texture missing:',
+                    config.key
+                );
+                continue;
+            }
+
+            const island = this.add.image(
+                width * config.x,
+                height * config.y,
+                config.key
+            );
+
+            // Preserve original image proportions
+            island.setScale(
+                (width * config.size) /
+                island.width
+            );
+
+            island.setDepth(5);
+
+            this.gameplayIslands.push(island);
+
+            // Island collision system
+            this.blockingIslands.push(island);
+
+            // Register animal rescue island
+            if (config.rescueAnimal) {
+
+                this.rescueIslands.push({
+                    animalType: config.rescueAnimal,
+                    sprite: island
+                });
+            }
+
+            // Register moving floating island
+            if (config.moving) {
+
+                this.movingIslands.push({
+                    sprite: island,
+                    speed: config.speed,
+                    activated: false,
+                    finished: false
+                });
+            }
+        }
+
+
+        // RAINBOW VALLEY SAFE ISLAND 1/3
+
+        const safeKey = 'safeIsland_4_1';
+
+        if (!this.textures.exists(safeKey)) {
+            console.error(
+                'Rainbow Valley Safe Island missing:',
+                safeKey
+            );
+            return;
+        }
+
+        this.safeIsland = this.add.image(
+            this.worldWidth - width * 0.38,
+            height * 0.53,
+            safeKey
+        );
+
+        this.safeIsland.setScale(
+            (width * 0.66) /
+            this.safeIsland.width
+        );
+
+        this.safeIsland.setDepth(5);
+
+        this.gameplayIslands.push(
+            this.safeIsland
+        );
+
+        // Safe Island must NOT be a blocking obstacle
+
+        // SAFE ISLAND SIGN
+
+        if (this.textures.exists('safeIslandSign')) {
+
+            this.safeIslandSign = this.add.image(
+                this.safeIsland.x -
+                    width * 0.40,
+                height * 0.29,
+                'safeIslandSign'
+            );
+
+            this.safeIslandSign.setScale(
+                (width * 0.10) /
+                this.safeIslandSign.width
+            );
+
+            this.safeIslandSign.setDepth(6);
+
+            this.gameplayIslands.push(
+                this.safeIslandSign
+            );
+        }
+
+        //
+        // DEBUG INFORMATION
+
+        console.log(
+            'Rainbow Valley 1/3 islands created:',
+            {
+                totalIslands:
+                    this.gameplayIslands.length,
+
+                stationaryIslands: 4,
+
+                movingIslands:
+                    this.movingIslands.length,
+
+                rescueIslands:
+                    this.rescueIslands.length,
+
+                worldWidth:
+                    this.worldWidth
+            }
+        );
+    }
+
+
+    // ==========================================
+    // RAINBOW VALLEY 2/3: ISLAND ENVIRONMENT
+    // ==========================================
+
+    createRainbowValleyLevel2Islands() {
+
+        const { width, height } = this.scale;
+
+        this.gameplayIslands = [];
+        this.blockingIslands = [];
+        this.movingIslands = [];
+        this.rescueIslands = [];
+
+        const layout = [
+
+            // Moving island 1
+            {
+                key: 'floatingIsland',
+                x: 0.85,
+                y: 0.72,
+                size: 0.21,
+                moving: true,
+                speed: 100
+            },
+
+            // Rescue reindeer
+            {
+                key: 'animalRescueIsland',
+                x: 1.40,
+                y: 0.50,
+                size: 0.25,
+                rescueAnimal: 'reindeer'
+            },
+
+            // Stationary island 1
+            {
+                key: 'rainbowStationary1',
+                x: 1.90,
+                y: 0.28,
+                size: 0.37
+            },
+
+            // Moving island 2
+            {
+                key: 'floatingIsland',
+                x: 2.35,
+                y: 0.77,
+                size: 0.20,
+                moving: true,
+                speed: 110
+            },
+
+            // Stationary island 2
+            {
+                key: 'rainbowStationary2',
+                x: 2.85,
+                y: 0.34,
+                size: 0.37
+            },
+
+            // Rescue puppy
+            {
+                key: 'animalRescueIsland',
+                x: 3.35,
+                y: 0.72,
+                size: 0.25,
+                rescueAnimal: 'dog'
+            },
+
+            // Moving island 3
+            {
+                key: 'floatingIsland',
+                x: 3.90,
+                y: 0.76,
+                size: 0.20,
+                moving: true,
+                speed: 115
+            },
+
+            // Stationary island 3
+            {
+                key: 'rainbowStationary3',
+                x: 4.35,
+                y: 0.29,
+                size: 0.37
+            },
+
+            // Moving island 4
+            {
+                key: 'floatingIsland',
+                x: 4.85,
+                y: 0.77,
+                size: 0.20,
+                moving: true,
+                speed: 120
+            },
+
+            // Rescue unicorn
+            {
+                key: 'animalRescueIsland',
+                x: 5.25,
+                y: 0.55,
+                size: 0.25,
+                rescueAnimal: 'unicorn'
+            },
+
+            // Stationary island 4
+            {
+                key: 'rainbowStationary4',
+                x: 5.75,
+                y: 0.31,
+                size: 0.37
+            },
+
+            // Moving island 5
+            {
+                key: 'floatingIsland',
+                x: 6.10,
+                y: 0.76,
+                size: 0.20,
+                moving: true,
+                speed: 125
+            }
+        ];
+
+        // CREATE ISLANDS
+
+        for (const config of layout) {
+
+            if (!this.textures.exists(config.key)) {
+                console.error(
+                    'Rainbow Valley 2/3 missing island:',
+                    config.key
+                );
+                continue;
+            }
+
+            const island = this.add.image(
+                width * config.x,
+                height * config.y,
+                config.key
+            );
+
+            island.setScale(
+                (width * config.size) / island.width
+            );
+
+            island.setDepth(5);
+
+            this.gameplayIslands.push(island);
+            this.blockingIslands.push(island);
+
+            if (config.rescueAnimal) {
+                this.rescueIslands.push({
+                    animalType: config.rescueAnimal,
+                    sprite: island
+                });
+            }
+
+            if (config.moving) {
+                this.movingIslands.push({
+                    sprite: island,
+                    speed: config.speed,
+                    activated: false,
+                    finished: false
+                });
+            }
+        }
+
+        // CREATE SAFE ISLAND 2/3
+
+        const safeKey = 'safeIsland_4_2';
+
+        if (!this.textures.exists(safeKey)) {
+            console.error(
+                'Rainbow Valley 2/3 safe island missing:',
+                safeKey
+            );
+            return;
+        }
+
+        this.safeIsland = this.add.image(
+            this.worldWidth - width * 0.40,
+            height * 0.53,
+            safeKey
+        );
+
+        this.safeIsland.setScale(
+            (width * 0.68) / this.safeIsland.width
+        );
+
+        this.safeIsland.setDepth(5);
+        this.gameplayIslands.push(this.safeIsland);
+
+        // Safe island is NOT a blocking obstacle.
+
+        if (this.textures.exists('safeIslandSign')) {
+
+            this.safeIslandSign = this.add.image(
+                this.safeIsland.x - width * 0.41,
+                height * 0.29,
+                'safeIslandSign'
+            );
+
+            this.safeIslandSign.setScale(
+                (width * 0.10) /
+                this.safeIslandSign.width
+            );
+
+            this.safeIslandSign.setDepth(6);
+
+            this.gameplayIslands.push(
+                this.safeIslandSign
+            );
+        }
+
+        console.log(
+            'Rainbow Valley 2/3 islands created:',
+            {
+                totalIslands: this.gameplayIslands.length,
+                movingIslands: this.movingIslands.length,
+                rescueIslands: this.rescueIslands.length,
+                worldWidth: this.worldWidth
+            }
+        );
+    }
+
+
+
+    // ==========================================
+    // RAINBOW VALLEY 3/3: COMPLETE ENVIRONMENT
+    // ==========================================
+
+    createRainbowValleyLevel3Islands() {
+
+        const { width, height } = this.scale;
+
+        this.gameplayIslands = [];
+        this.blockingIslands = [];
+        this.movingIslands = [];
+        this.rescueIslands = [];
+
+        const layout = [
+
+            // MOVING FLOATING ISLAND 1
+            {
+                key: 'floatingIsland',
+                x: 0.85,
+                y: 0.72,
+                size: 0.21,
+                moving: true,
+                speed: 105
+            },
+
+            // RESCUE ISLAND: UNICORN
+            {
+                key: 'animalRescueIsland',
+                x: 1.40,
+                y: 0.50,
+                size: 0.25,
+                rescueAnimal: 'unicorn'
+            },
+
+            // STATIONARY ISLAND 1
+            {
+                key: 'rainbowStationary1',
+                x: 1.90,
+                y: 0.28,
+                size: 0.37
+            },
+
+            // MOVING FLOATING ISLAND 2
+            {
+                key: 'floatingIsland',
+                x: 2.30,
+                y: 0.76,
+                size: 0.20,
+                moving: true,
+                speed: 110
+            },
+
+            // STATIONARY ISLAND 2
+            {
+                key: 'rainbowStationary2',
+                x: 2.85,
+                y: 0.34,
+                size: 0.37
+            },
+
+            // RESCUE ISLAND: PUPPY
+            {
+                key: 'animalRescueIsland',
+                x: 3.30,
+                y: 0.72,
+                size: 0.25,
+                rescueAnimal: 'dog'
+            },
+
+            // MOVING FLOATING ISLAND 3
+            {
+                key: 'floatingIsland',
+                x: 3.85,
+                y: 0.76,
+                size: 0.20,
+                moving: true,
+                speed: 115
+            },
+
+            // STATIONARY ISLAND 3
+            {
+                key: 'rainbowStationary3',
+                x: 4.40,
+                y: 0.30,
+                size: 0.37
+            },
+
+            // RESCUE ISLAND: FOX
+            {
+                key: 'animalRescueIsland',
+                x: 4.90,
+                y: 0.53,
+                size: 0.25,
+                rescueAnimal: 'fox'
+            },
+
+            // MOVING FLOATING ISLAND 4
+            {
+                key: 'floatingIsland',
+                x: 5.35,
+                y: 0.76,
+                size: 0.20,
+                moving: true,
+                speed: 120
+            },
+
+            // STATIONARY ISLAND 4
+            {
+                key: 'rainbowStationary4',
+                x: 5.95,
+                y: 0.32,
+                size: 0.37
+            },
+
+            // MOVING FLOATING ISLAND 5
+            {
+                key: 'floatingIsland',
+                x: 6.35,
+                y: 0.77,
+                size: 0.20,
+                moving: true,
+                speed: 125
+            },
+
+            // RESCUE ISLAND: REINDEER
+            {
+                key: 'animalRescueIsland',
+                x: 6.90,
+                y: 0.54,
+                size: 0.25,
+                rescueAnimal: 'reindeer'
+            },
+
+            // MOVING FLOATING ISLAND 6
+            {
+                key: 'floatingIsland',
+                x: 7.35,
+                y: 0.76,
+                size: 0.20,
+                moving: true,
+                speed: 130
+            }
+        ];
+
+        // CREATE ALL ISLAND SPRITES
+
+        for (const config of layout) {
+
+            if (!this.textures.exists(config.key)) {
+                console.error(
+                    'Rainbow Valley 3/3 missing island:',
+                    config.key
+                );
+                continue;
+            }
+
+            const island = this.add.image(
+                width * config.x,
+                height * config.y,
+                config.key
+            );
+
+            island.setScale(
+                (width * config.size) / island.width
+            );
+
+            island.setDepth(5);
+
+            this.gameplayIslands.push(island);
+            this.blockingIslands.push(island);
+
+            // REGISTER ANIMAL RESCUE ISLAND
+
+            if (config.rescueAnimal) {
+
+                this.rescueIslands.push({
+                    animalType: config.rescueAnimal,
+                    sprite: island
+                });
+            }
+
+            // REGISTER MOVING ISLAND
+
+            if (config.moving) {
+
+                this.movingIslands.push({
+                    sprite: island,
+                    speed: config.speed,
+                    activated: false,
+                    finished: false
+                });
+            }
+        }
+
+        // ======================================
+        // CREATE SAFE ISLAND 3/3
+        // ======================================
+
+        const safeKey = 'safeIsland_4_3';
+
+        if (!this.textures.exists(safeKey)) {
+
+            console.error(
+                'Rainbow Valley 3/3 safe island missing:',
+                safeKey
+            );
+
+            return;
+        }
+
+        this.safeIsland = this.add.image(
+            this.worldWidth - width * 0.43,
+            height * 0.53,
+            safeKey
+        );
+
+        this.safeIsland.setScale(
+            (width * 0.74) / this.safeIsland.width
+        );
+
+        this.safeIsland.setDepth(5);
+
+        this.gameplayIslands.push(this.safeIsland);
+
+        // Safe island must not be a blocking obstacle.
+
+        // CREATE SAFE ISLAND SIGN
+
+        if (this.textures.exists('safeIslandSign')) {
+
+            this.safeIslandSign = this.add.image(
+                this.safeIsland.x - width * 0.44,
+                height * 0.29,
+                'safeIslandSign'
+            );
+
+            this.safeIslandSign.setScale(
+                (width * 0.10) /
+                this.safeIslandSign.width
+            );
+
+            this.safeIslandSign.setDepth(6);
+
+            this.gameplayIslands.push(
+                this.safeIslandSign
+            );
+        }
+
+        console.log(
+            'Rainbow Valley 3/3 islands created:',
+            {
+                totalIslands: this.gameplayIslands.length,
+                movingIslands: this.movingIslands.length,
+                rescueIslands: this.rescueIslands.length,
+                worldWidth: this.worldWidth
+            }
+        );
+    }
 
 
     // WINDY HEIGHTS LEVEL 1/3: FLOATING ISLANDS
@@ -3742,9 +4617,94 @@ const windyLevel1Layout = [
             currentMainLevel === 3 &&
             currentSublevel === 3;
 
+        const isRainbowLevel1 =
+            currentMainLevel === 4 &&
+            currentSublevel === 1;
 
-        const animalConfigs = isStormLevel3
+
+        const isRainbowLevel2 =
+            currentMainLevel === 4 &&
+            currentSublevel === 2;
+
+
+        const isRainbowLevel3 =
+            currentMainLevel === 4 &&
+            currentSublevel === 3;
+
+
+
+
+
+      const animalConfigs = isRainbowLevel3
             ? [
+                // RAINBOW VALLEY 3/3: UNICORN
+                {
+                    id: 'unicorn-rainbow-3',
+                    type: 'unicorn',
+                    texture: 'unicornWorried',
+                    happyFaceKey: 'unicornHappyFace',
+                    widthRatio: 0.070
+                },
+
+                // RAINBOW VALLEY 3/3: PUPPY
+                {
+                    id: 'dog-rainbow-3',
+                    type: 'dog',
+                    texture: 'dogWorried',
+                    happyFaceKey: 'dogHappyFace',
+                    widthRatio: 0.065
+                },
+
+                // RAINBOW VALLEY 3/3: FOX
+                {
+                    id: 'fox-rainbow-3',
+                    type: 'fox',
+                    texture: 'foxWorried',
+                    happyFaceKey: 'foxHappyFace',
+                    widthRatio: 0.065
+                },
+
+                // RAINBOW VALLEY 3/3: REINDEER
+                {
+                    id: 'reindeer-rainbow-3',
+                    type: 'reindeer',
+                    texture: 'reindeerWorried',
+                    happyFaceKey: 'reindeerHappyFace',
+                    widthRatio: 0.070
+                }
+            ]
+            : isRainbowLevel2
+                ? [
+                    // RAINBOW VALLEY 2/3: REINDEER
+                    {
+                        id: 'reindeer-rainbow-2',
+                        type: 'reindeer',
+                        texture: 'reindeerWorried',
+                        happyFaceKey: 'reindeerHappyFace',
+                        widthRatio: 0.072
+                    },
+
+                    // RAINBOW VALLEY 2/3: PUPPY
+                    {
+                        id: 'dog-rainbow-2',
+                        type: 'dog',
+                        texture: 'dogWorried',
+                        happyFaceKey: 'dogHappyFace',
+                        widthRatio: 0.070
+                    },
+
+                    // RAINBOW VALLEY 2/3: UNICORN
+                    {
+                        id: 'unicorn-rainbow-2',
+                        type: 'unicorn',
+                        texture: 'unicornWorried',
+                        happyFaceKey: 'unicornHappyFace',
+                        widthRatio: 0.075
+                    }
+                ]
+
+            : isStormLevel3
+             ? [
                 // STORM RESCUE 3/3: FOUR ANIMALS
 
                 // MONKEY
@@ -4247,6 +5207,432 @@ const windyLevel1Layout = [
             }
         }
     }
+
+
+    // RAINBOW VALLEY: CREATE OBSTACLES
+
+    createRainbowObstacles() {
+
+        const mainLevel = Number(this.mainLevelId);
+        const sublevel = Number(this.sublevelId);
+
+        this.rainbowObstacles = [];
+
+        // Only Rainbow Valley 1/3 for now
+
+        if (
+            mainLevel !== 4 ||
+            ![1, 2,3].includes(sublevel)
+        ) {
+            return;
+        }
+
+
+        const { width, height } = this.scale;
+
+
+        // RAINBOW VALLEY 1/3 OBSTACLE LAYOUT
+
+        const level1Configurations = [
+
+            // PINK CLOUD 1
+            {
+                key: 'pinkCloudObstacle',
+                x: 1.70,
+                y: 0.49,
+                size: 0.13,
+                speed: 75,
+                rotationSpeed: 0
+            },
+
+            // SPINNING TOFFEE 1
+            {
+                key: 'spinningToffeeObstacle',
+                x: 2.55,
+                y: 0.43,
+                size: 0.095,
+                speed: 95,
+                rotationSpeed: 1.8
+            },
+
+            // RAINBOW TORNADO 1
+            {
+                key: 'rainbowTornadoObstacle',
+                x: 3.35,
+                y: 0.55,
+                size: 0.13,
+                speed: 85,
+                rotationSpeed: 0
+            },
+
+            // PINK CLOUD 2
+            {
+                key: 'pinkCloudObstacle',
+                x: 4.25,
+                y: 0.42,
+                size: 0.13,
+                speed: 90,
+                rotationSpeed: 0
+            },
+
+            // SPINNING TOFFEE 2
+            {
+                key: 'spinningToffeeObstacle',
+                x: 4.80,
+                y: 0.56,
+                size: 0.095,
+                speed: 105,
+                rotationSpeed: -2
+            }
+        ];
+
+
+        // RAINBOW VALLEY 2/3: OBSTACLE LAYOUT
+
+        const level2Configurations = [
+
+            {
+                key: 'pinkCloudObstacle',
+                x: 1.85,
+                y: 0.50,
+                size: 0.13,
+                speed: 85,
+                rotationSpeed: 0
+            },
+
+            {
+                key: 'spinningToffeeObstacle',
+                x: 2.55,
+                y: 0.55,
+                size: 0.095,
+                speed: 105,
+                rotationSpeed: 2.0
+            },
+
+            {
+                key: 'rainbowTornadoObstacle',
+                x: 3.10,
+                y: 0.45,
+                size: 0.13,
+                speed: 95,
+                rotationSpeed: 0
+            },
+
+            {
+                key: 'pinkCloudObstacle',
+                x: 3.85,
+                y: 0.48,
+                size: 0.13,
+                speed: 100,
+                rotationSpeed: 0
+            },
+
+            {
+                key: 'spinningToffeeObstacle',
+                x: 4.60,
+                y: 0.58,
+                size: 0.095,
+                speed: 110,
+                rotationSpeed: -2.1
+            },
+
+            {
+                key: 'rainbowTornadoObstacle',
+                x: 5.55,
+                y: 0.44,
+                size: 0.13,
+                speed: 105,
+                rotationSpeed: 0
+            },
+
+            {
+                key: 'pinkCloudObstacle',
+                x: 6.00,
+                y: 0.55,
+                size: 0.13,
+                speed: 110,
+                rotationSpeed: 0
+            }
+        ];
+
+
+
+        // RAINBOW VALLEY 3/3 OBSTACLE LAYOUT
+
+        const level3Configurations = [
+
+            // PINK CLOUD 1
+            {
+                key: 'pinkCloudObstacle',
+                x: 1.85,
+                y: 0.49,
+                size: 0.13,
+                speed: 90,
+                rotationSpeed: 0
+            },
+
+            // SPINNING TOFFEE 1
+            {
+                key: 'spinningToffeeObstacle',
+                x: 2.65,
+                y: 0.56,
+                size: 0.095,
+                speed: 110,
+                rotationSpeed: 2.1
+            },
+
+            // RAINBOW TORNADO 1
+            {
+                key: 'rainbowTornadoObstacle',
+                x: 3.70,
+                y: 0.45,
+                size: 0.13,
+                speed: 100,
+                rotationSpeed: 0
+            },
+
+            // PINK CLOUD 2
+            {
+                key: 'pinkCloudObstacle',
+                x: 4.35,
+                y: 0.55,
+                size: 0.13,
+                speed: 105,
+                rotationSpeed: 0
+            },
+
+            // SPINNING TOFFEE 2
+            {
+                key: 'spinningToffeeObstacle',
+                x: 5.40,
+                y: 0.43,
+                size: 0.095,
+                speed: 120,
+                rotationSpeed: -2.2
+            },
+
+            // RAINBOW TORNADO 2
+            {
+                key: 'rainbowTornadoObstacle',
+                x: 6.20,
+                y: 0.51,
+                size: 0.13,
+                speed: 110,
+                rotationSpeed: 0
+            },
+
+            // PINK CLOUD 3
+            {
+                key: 'pinkCloudObstacle',
+                x: 7.15,
+                y: 0.45,
+                size: 0.13,
+                speed: 115,
+                rotationSpeed: 0
+            }
+        ];
+
+
+        const configurations =
+            sublevel === 3
+                ? level3Configurations
+                : sublevel === 2
+                    ? level2Configurations
+                    : level1Configurations;
+
+
+
+        // CREATE OBSTACLE SPRITES
+
+        for (const config of configurations) {
+
+            if (!this.textures.exists(config.key)) {
+
+                console.error(
+                    'Rainbow obstacle texture missing:',
+                    config.key
+                );
+
+                continue;
+            }
+
+            const obstacleSprite = this.add.image(
+                width * config.x,
+                height * config.y,
+                config.key
+            );
+
+            obstacleSprite.setScale(
+                (width * config.size) /
+                obstacleSprite.width
+            );
+
+            obstacleSprite.setDepth(16);
+
+            this.rainbowObstacles.push({
+
+                sprite: obstacleSprite,
+
+                speed: config.speed,
+
+                rotationSpeed: config.rotationSpeed,
+
+                active: false,
+
+                finished: false
+            });
+        }
+
+        console.log(
+            'Rainbow Valley 1/3 obstacles created:',
+            this.rainbowObstacles.length
+        );
+    }
+
+
+
+
+
+
+
+
+    // ==========================================
+    // RAINBOW VALLEY: UPDATE OBSTACLES
+    // ==========================================
+
+    updateRainbowObstacles(dt, time) {
+
+        // Check whether the rainbow obstacle
+        // system has been created.
+        if (!this.rainbowObstacles) {
+            return;
+        }
+
+        // Only update during active gameplay
+        if (
+            !this.gameplayStarted ||
+            this.isGamePaused ||
+            this.isPuzzleOpen ||
+            this.isLandingSequencePlaying ||
+            this.levelCompleted ||
+            this.isGameOver
+        ) {
+            return;
+        }
+
+        const { width } = this.scale;
+
+        for (const obstacle of this.rainbowObstacles) {
+
+            if (obstacle.finished) {
+                continue;
+            }
+
+            const sprite = obstacle.sprite;
+
+            // ==================================
+            // ACTIVATE WHEN PANDA APPROACHES
+            // ==================================
+
+            if (!obstacle.active) {
+
+                const distance =
+                    sprite.x - this.pandaPosition.x;
+
+                if (
+                    distance > 0 &&
+                    distance < width * 1.1
+                ) {
+                    obstacle.active = true;
+                }
+            }
+
+            if (!obstacle.active) {
+                continue;
+            }
+
+            // ==================================
+            // MOVE FROM RIGHT TO LEFT
+            // ==================================
+
+            sprite.x -= obstacle.speed * dt;
+
+            // ==================================
+            // ROTATE SPINNING TOFFEE
+            // ==================================
+
+            if (obstacle.rotationSpeed !== 0) {
+
+                sprite.rotation +=
+                    obstacle.rotationSpeed * dt;
+            }
+
+            // ==================================
+            // OBSTACLE COLLISION BOX
+            // ==================================
+
+            const obstacleBox =
+                new Phaser.Geom.Rectangle(
+
+                    sprite.x -
+                        sprite.displayWidth * 0.30,
+
+                    sprite.y -
+                        sprite.displayHeight * 0.30,
+
+                    sprite.displayWidth * 0.60,
+
+                    sprite.displayHeight * 0.60
+                );
+
+            // ==================================
+            // PANDA COLLISION BOX
+            // ==================================
+
+            const pandaBox =
+                this.getPandaCollisionBox(
+
+                    this.pandaPosition.x,
+
+                    this.pandaPosition.y +
+                        this.floatOffset
+                );
+
+            // ==================================
+            // HANDLE OBSTACLE COLLISION
+            // ==================================
+
+            if (
+                Phaser.Geom.Intersects.RectangleToRectangle(
+                    pandaBox,
+                    obstacleBox
+                )
+            ) {
+
+                // Reuse existing -5 energy
+                // collision penalty and cooldown
+                this.registerPandaHit(time);
+            }
+
+            // ==================================
+            // FINISH WHEN OBSTACLE PASSES PANDA
+            // ==================================
+
+            if (
+                sprite.x +
+                    sprite.displayWidth / 2 <
+
+                this.pandaPosition.x -
+                    width * 0.5
+            ) {
+
+                obstacle.finished = true;
+
+                sprite.setVisible(false);
+            }
+        }
+    }
+
 
 
     createBirdObstacles() {
@@ -5167,9 +6553,29 @@ const cloudPositions = sublevel === 1
                 mainLevel === 3 &&
                 sublevel === 3;
 
+
+            const isRainbowLevel1 =
+                mainLevel === 4 &&
+                sublevel === 1;
+
+
+            const isRainbowLevel2 =
+                mainLevel === 4 &&
+                sublevel === 2;
+
+            const isRainbowLevel3 =
+                mainLevel === 4 &&
+                sublevel === 3;
+
+            const isRainbowValley =
+                isRainbowLevel1 ||
+                isRainbowLevel2 ||
+                isRainbowLevel3;
+
+
             // Enable Storm Rescue 1/3 and 2/3 landing.
             if (
-                !isSunnySkies && !isWindyHeights && !isStormLevel1 && !isStormLevel2 && !isStormLevel3
+                !isSunnySkies && !isWindyHeights && !isStormLevel1 && !isStormLevel2 && !isStormLevel3 && !isRainbowLevel1 && !isRainbowValley
             ) {
                 return;
             }
@@ -5185,6 +6591,21 @@ const cloudPositions = sublevel === 1
             // have been rescued.
             if (
                 this.rescuedCount < this.requiredRescues
+            ) {
+                return;
+            }
+
+            // RAINBOW VALLEY:
+            // BOTH BANANAS MUST BE COLLECTED
+
+            if (
+                isRainbowValley &&
+                (
+                    !this.stormLevel3Bananas ||
+                    this.stormLevel3Bananas.some(
+                        banana => !banana.collected
+                    )
+                )
             ) {
                 return;
             }
@@ -5211,6 +6632,7 @@ const cloudPositions = sublevel === 1
             const landingX =
                 this.safeIsland.x +
                 this.safeIsland.displayWidth * (
+                    isRainbowLevel1 ? -0.04 :
                     isStormLevel3 ? 0.0 :
                     isStormLevel2 ? 0.0 :
                     isStormLevel1 ? 0.0 :
@@ -5224,6 +6646,8 @@ const cloudPositions = sublevel === 1
             const landingY =
                this.safeIsland.y +
                 this.safeIsland.displayHeight * (
+                    isRainbowValley ? 0.0 :
+                    isRainbowLevel1 ? -0.04 :
                     isStormLevel3 ? -0.04 :
                     isStormLevel2 ? -0.04 :
                     isStormLevel1 ? -0.04 :
@@ -5473,6 +6897,17 @@ const cloudPositions = sublevel === 1
             const isStormLevel3 =
                 Number(this.mainLevelId) === 3 && Number(this.sublevelId) === 3;
 
+            const isRainbowLevel1 =
+                Number(this.mainLevelId) === 4 && Number(this.sublevelId) === 1;
+
+
+            const isRainbowLevel2 =
+                Number(this.mainLevelId) === 4 && Number(this.sublevelId) === 2;
+
+
+            const isRainbowLevel3 =
+                Number(this.mainLevelId) === 4 && Number(this.sublevelId) === 3;
+
             const rescuedAnimals =
                 this.rescueAnimals.filter(
                     animal => animal.rescued
@@ -5489,22 +6924,33 @@ const cloudPositions = sublevel === 1
             // SELECT DELIVERED ANIMAL TEXTURE
 
 
-const safeTexture =
-    animal.type === 'monkey'
-        ? 'monkeySafe'
-        : animal.type === 'fox'
-            ? 'foxSafe'
-            : animal.type === 'cheetah'
-                ? 'cheetahSafe'
-                : animal.type === 'bunny'
-                    ? 'bunnySafe'
-                    : animal.type === 'giraffe'
-                        ? 'giraffeSafe'
-                        : animal.type === 'cow'
-                            ? 'cowSafe'
-                            : animal.type === 'elephant'
-                                ? 'elephantSafe'
-                                : 'monkeySafe';
+
+
+            const safeTextures = {
+                dog: 'dogSafe',
+                monkey: 'monkeySafe',
+                fox: 'foxSafe',
+                cheetah: 'cheetahSafe',
+                bunny: 'bunnySafe',
+                giraffe: 'giraffeSafe',
+                cow: 'cowSafe',
+                elephant: 'elephantSafe',
+                reindeer: 'reindeerSafe',
+                unicorn: 'unicornSafe'
+            };
+
+            const safeTexture =
+                safeTextures[animal.type];
+
+            if (!safeTexture) {
+                console.error(
+                    'No safe texture configured for:',
+                    animal.type
+                );
+                return;
+            }
+
+
 
 
                 if (!this.textures.exists(safeTexture)) {
@@ -5543,10 +6989,47 @@ const safeTexture =
                 bunny: 0.17
             };
 
-            const xOffset = isStormLevel3
-                ? (stormLevel3Offsets[animal.type] ?? 0)
-                : isStormLevel2
-                    ? (stormLevel2Offsets[animal.type] ?? 0)
+            const rainbowLevel1Offsets = {
+                dog: -0.13,
+                elephant: 0.10,
+                giraffe: 0.23
+            };
+
+
+            // RAINBOW VALLEY 2/3:
+            // Position animals close to panda.
+
+            const rainbowLevel2Offsets = {
+                reindeer: -0.15,
+                dog: 0.12,
+                unicorn: 0.24
+            };
+
+
+            // RAINBOW VALLEY 3/3
+            // Four animals positioned close to panda.
+
+            const rainbowLevel3Offsets = {
+                unicorn: -0.20,
+                dog: -0.105,
+                fox: 0.105,
+                reindeer: 0.20
+            };
+
+
+
+
+
+            const xOffset = isRainbowLevel3
+                ? (rainbowLevel3Offsets[animal.type] ?? 0)
+                : isRainbowLevel2
+                ? (rainbowLevel2Offsets[animal.type] ?? 0)
+                : isRainbowLevel1
+                    ? (rainbowLevel1Offsets[animal.type] ?? 0)
+                : isStormLevel3
+                    ? (stormLevel3Offsets[animal.type] ?? 0)
+                        : isStormLevel2
+                        ? (stormLevel2Offsets[animal.type] ?? 0)
                     : isStormLevel1
                     ? (animal.type === 'fox' ? -0.17 : 0.18)
                     : isWindyLevel3
@@ -5568,31 +7051,35 @@ const safeTexture =
                 bunny: 0.02
             };
 
-
-
-        const yOffset = isStormLevel3
-            ? (stormLevel3YOffsets[animal.type] ?? 0.02)
-            :isStormLevel2
-                ?(
-                animal.type === 'fox' ? 0.02 :
-                animal.type === 'bunny' ? 0.015 : 0.02
-            )
-            : isStormLevel1
-                ? 0.02
-                : isWindyLevel3
-                    ? (
-                        animal.type === 'giraffe' ? 0.01 :
-                        animal.type === 'cow' ? 0.015 : 0.02
+            const yOffset = isRainbowLevel3
+                ? 0.015
+                : isRainbowLevel2
+                ? 0.015
+                : isRainbowLevel1
+                    ? 0.015
+                : isStormLevel3
+                    ? (stormLevel3YOffsets[animal.type] ?? 0.02)
+                    :isStormLevel2
+                        ?(
+                        animal.type === 'fox' ? 0.02 :
+                        animal.type === 'bunny' ? 0.015 : 0.02
                     )
-                    : isWindyLevel2
-                        ? -0.02
-                        : isWindyLevel1
-                            ? -0.02
-                            : isLevel3
-                                ? 0.08
-                                : isLevel2
-                                    ? 0.065
-                                    : -0.04;
+                        : isStormLevel1
+                        ? 0.02
+                            : isWindyLevel3
+                            ? (
+                                animal.type === 'giraffe' ? 0.01 :
+                                animal.type === 'cow' ? 0.015 : 0.02
+                            )
+                                : isWindyLevel2
+                                ? -0.02
+                                    : isWindyLevel1
+                                    ? -0.02
+                                        : isLevel3
+                                        ? 0.08
+                                            : isLevel2
+                                                ? 0.065
+                                                : -0.04;
 
 
                     const deliveredSprite = this.add.image(
@@ -5611,30 +7098,55 @@ const safeTexture =
                 };
                 // Level 3 animals should fit together.
 
-        const sizeRatio = isStormLevel3
-            ? (stormLevel3Sizes[animal.type] ?? 0.085)
-            :isStormLevel2
-                ? (
-                    animal.type === 'fox' ? 0.10 :
-                    animal.type === 'bunny' ? 0.088 :
-                    0.098
-                )
-                : isStormLevel1
-                    ? (animal.type === 'fox' ? 0.12 : 0.11)
-                    : isWindyLevel3
+            const rainbowLevel2Sizes = {
+                reindeer: 0.095,
+                dog: 0.090,
+                unicorn: 0.095
+            };
+
+
+            const rainbowLevel3Sizes = {
+                unicorn: 0.078,
+                dog: 0.075,
+                fox: 0.075,
+                reindeer: 0.078
+            };
+
+
+            const sizeRatio = isRainbowLevel3
+                ? (rainbowLevel3Sizes[animal.type] ?? 0.075)
+                : isRainbowLevel2
+                    ? (rainbowLevel2Sizes[animal.type] ?? 0.090)
+                    : isRainbowLevel1
                         ? (
-                            animal.type === 'giraffe' ? 0.11 :
-                            animal.type === 'cow' ? 0.105 : 0.12
+                        animal.type === 'elephant'
+                            ? 0.105
+                            : 0.095
                         )
-                    : isWindyLevel2
-                            ? (animal.type === 'giraffe' ? 0.12 : 0.13)
-                            : isWindyLevel1
-                                ? 0.125
-                                : isLevel3
-                                    ? (animal.type === 'elephant' ? 0.11 : 0.09)
-                                       : isLevel2
-                                       ? (animal.type === 'elephant' ? 0.14 : 0.12)
-                                       : 0.13;
+                        : isStormLevel3
+                            ? (stormLevel3Sizes[animal.type] ?? 0.085)
+                            :isStormLevel2
+                        ? (
+                            animal.type === 'fox' ? 0.10 :
+                            animal.type === 'bunny' ? 0.088 :
+                            0.098
+                        )
+                            : isStormLevel1
+                            ? (animal.type === 'fox' ? 0.12 : 0.11)
+                                : isWindyLevel3
+                                ? (
+                                    animal.type === 'giraffe' ? 0.11 :
+                                    animal.type === 'cow' ? 0.105 : 0.12
+                                )
+                                : isWindyLevel2
+                                    ? (animal.type === 'giraffe' ? 0.12 : 0.13)
+                                    : isWindyLevel1
+                                        ? 0.125
+                                        : isLevel3
+                                            ? (animal.type === 'elephant' ? 0.11 : 0.09)
+                                            : isLevel2
+                                                ? (animal.type === 'elephant' ? 0.14 : 0.12)
+                                                : 0.13;
 
 
 
@@ -5648,7 +7160,7 @@ const safeTexture =
                 deliveredSprite.setOrigin(0.5, 1);
 
                 deliveredSprite.setDepth(
-                    (isLevel3 || isWindyLevel3 || isStormLevel2  || isStormLevel3)
+                    (isLevel3 || isWindyLevel3 || isStormLevel2  || isStormLevel3|| isRainbowLevel1 || isRainbowLevel2 || isRainbowLevel3)
                         ? 18
                         : 22
                 );
@@ -5661,12 +7173,16 @@ const safeTexture =
                 );
             });
 
+
             const regionName =
-                Number(this.mainLevelId) === 3
-                    ? 'Storm Rescue'
-                    : Number(this.mainLevelId) === 2
-                        ? 'Windy Heights'
-                        : 'Sunny Skies';
+                Number(this.mainLevelId) === 4
+                    ? 'Rainbow Valley'
+                    : Number(this.mainLevelId) === 3
+                        ? 'Storm Rescue'
+                        : Number(this.mainLevelId) === 2
+                            ? 'Windy Heights'
+                            : 'Sunny Skies';
+
 
             console.log(
                 `${regionName} ${this.sublevelId}/3: ` +
@@ -7090,10 +8606,19 @@ const safeTexture =
                     this.skyBackground.tileScaleX;
 
 
-                    this.updateBirdObstacles(dt, time);
-                    this.updateStormBatObstacles(dt, time);
-                    this.updateStormCloudObstacles(dt, time);
-                    this.updateWindGustObstacles(dt, time);
+
+                // SUNNY SKIES BIRDS
+                this.updateBirdObstacles(dt, time);
+
+                // STORM RESCUE OBSTACLES
+                this.updateStormBatObstacles(dt, time);
+                this.updateStormCloudObstacles(dt, time);
+
+                // WINDY HEIGHTS
+                this.updateWindGustObstacles(dt, time);
+
+                // RAINBOW VALLEY
+                this.updateRainbowObstacles(dt, time);
 
 
                     //Energydrain by -1
