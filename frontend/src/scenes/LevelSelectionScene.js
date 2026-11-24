@@ -3,6 +3,7 @@ import Phaser from 'phaser';
 import ImageButton from '../components/ImageButton.js';
 import AudioManager from '../components/AudioManager.js';
 import { fetchPlayerProgress } from '../services/playerProgressApi.js';
+import { fetchPlayerProfile } from '../services/playerProfileApi.js';
 
 export default class LevelSelectionScene extends Phaser.Scene {
     constructor() {
@@ -107,6 +108,9 @@ export default class LevelSelectionScene extends Phaser.Scene {
 
         // Points counter
         this.createStarCounter(width, height);
+
+        // Load display name, avatar and overall points.
+        this.loadPlayerProfile();
 
         // Back button
         new ImageButton(
@@ -434,7 +438,9 @@ export default class LevelSelectionScene extends Phaser.Scene {
 
     // PLAYER NAMEPLATE
 
+
     createPlayerNameplate(width, height) {
+
         const x = width * 0.18;
         const y = height * 0.11;
 
@@ -449,86 +455,278 @@ export default class LevelSelectionScene extends Phaser.Scene {
             290
         );
 
-        nameplate.setScale(
-            plateWidth / nameplate.width
+        nameplate
+            .setScale(plateWidth / nameplate.width)
+            .setDepth(10);
+
+        // Initial name from the Phaser registry.
+        const initialName =
+            this.registry.get('playerDisplayName') ||
+            this.registry.get('authenticatedPlayer') ||
+            'Player';
+
+        // PLAYER AVATAR POSITION
+
+        const avatarSize = Math.min(
+            70,
+            plateWidth * 0.3
         );
 
-        nameplate.setDepth(10);
+        const avatarX = x - plateWidth * 0.29;
 
-        const username =
-            this.registry.get('authenticatedPlayer') || 'Player';
-
-        const usernameText = this.add.text(
-            x + plateWidth * 0.10,
+        // Default avatar background.
+        this.playerAvatarFallback = this.add.circle(
+            avatarX,
             y,
-            username,
+            avatarSize / 2,
+            0x6d9bd3
+        );
+
+        this.playerAvatarFallback
+            .setStrokeStyle(3, 0xffffff)
+            .setDepth(11);
+
+        // Default avatar initial.
+        this.playerAvatarInitial = this.add.text(
+            avatarX,
+            y,
+            initialName.charAt(0).toUpperCase(),
+            {
+                fontFamily: 'Arial, sans-serif',
+                fontSize: '21px',
+                fontStyle: 'bold',
+                color: '#ffffff'
+            }
+        );
+
+        this.playerAvatarInitial
+            .setOrigin(0.5)
+            .setDepth(12);
+
+        // DOM IMAGE FOR AUTHENTICATED PLAYER AVATAR
+
+        this.playerAvatarElement = this.add.dom(
+            avatarX,
+            y
+        ).createFromHTML(`
+            <div style="
+                width: ${avatarSize}px;
+                height: ${avatarSize}px;
+                overflow: hidden;
+                border-radius: 50%;
+                border: 3px solid white;
+                box-sizing: border-box;
+                pointer-events: none;
+            ">
+                <img
+                    alt="Player avatar"
+                    style="
+                        width: 100%;
+                        height: 100%;
+                        object-fit: cover;
+                        transform: scale(1.10);
+                        border-radius: 50%;
+                        display: block;
+                    "
+                >
+            </div>
+        `);
+
+        this.playerAvatarElement
+            .setOrigin(0.5)
+            .setDepth(13);
+
+        this.playerAvatarElement.setVisible(false);
+
+        // PLAYER DISPLAY NAME
+
+        this.playerNameText = this.add.text(
+            x + plateWidth * 0.12,
+            y,
+            initialName,
             {
                 fontFamily: 'Arial, sans-serif',
                 fontSize: '18px',
                 fontStyle: 'bold',
                 color: '#ffffff',
                 stroke: '#164b9c',
-                strokeThickness: 3
+                strokeThickness: 3,
+                align: 'center'
             }
         );
 
-        usernameText
+        this.playerNameText
             .setOrigin(0.5)
             .setDepth(11);
 
-        usernameText.setScale(
+        this.playerNameText.setScale(
             Math.min(
                 1,
-                (plateWidth * 0.58) /
-                    Math.max(usernameText.width, 1)
+                (plateWidth * 0.53) /
+                    Math.max(this.playerNameText.width, 1)
             )
         );
     }
 
+
     // POINTS COUNTER
 
 
-    createStarCounter(width, height) {
-        const x = width * 0.88;
-        const y = height * 0.11;
+        createStarCounter(width, height) {
 
-        const counter = this.add.image(
-            x,
-            y,
-            'levelStarCounter'
-        );
+            const x = width * 0.88;
+            const y = height * 0.11;
 
-        const counterWidth = Math.min(
-            width * 0.15,
-            220
-        );
+            const counter = this.add.image(
+             x,
+             y,
+             'levelStarCounter'
+            );
 
-        counter.setScale(
-            counterWidth / counter.width
-        );
+            const counterWidth = Math.min(
+                width * 0.15,
+                220
+            );
 
-        counter.setDepth(10);
+            counter.setScale(
+                counterWidth / counter.width
+            );
 
-        // Points are separate from completion stars.
-        // This remains temporary until points API integration.
-        const totalPoints = 0;
+            counter.setDepth(10);
 
-        this.add.text(
-            x + counterWidth * 0.13,
-            y,
-            `${totalPoints}`,
-            {
-                fontFamily: 'Arial, sans-serif',
-                fontSize: '20px',
-                fontStyle: 'bold',
-                color: '#ffffff',
-                stroke: '#164b9c',
-                strokeThickness: 3
+            // Keep a reference so the text can update
+            // when the backend sends the player's score.
+            this.totalPointsText = this.add.text(
+                x + counterWidth * 0.13,
+                y,
+                '...',
+                {
+                    fontFamily: 'Arial, sans-serif',
+                    fontSize: '20px',
+                    fontStyle: 'bold',
+                    color: '#ffffff',
+                    stroke: '#164b9c',
+                    strokeThickness: 3
+                }
+            );
+
+            this.totalPointsText
+                .setOrigin(0.5)
+                .setDepth(11);
+        }
+
+        // LOAD TOTAL SCORE FROM BACKEND
+
+
+        async loadPlayerProfile() {
+
+            try {
+
+                const profile = await fetchPlayerProfile();
+
+                // Ignore responses after leaving the scene.
+                if (!this.sys.isActive()) {
+                    return;
+                }
+
+                // GET EDITABLE DISPLAY NAME
+
+                const displayName =
+                    typeof profile.displayName === 'string' &&
+                    profile.displayName.trim().length > 0
+                        ? profile.displayName.trim()
+                        : profile.username || 'Player';
+
+                this.playerNameText.setText(displayName);
+
+                this.playerNameText.setScale(
+                    Math.min(
+                        1,
+                        153 / Math.max(this.playerNameText.width, 1)
+                    )
+                );
+
+                this.registry.set(
+                    'playerDisplayName',
+                    displayName
+                );
+
+                // UPDATE DEFAULT AVATAR INITIAL
+
+                this.playerAvatarInitial.setText(
+                    displayName.charAt(0).toUpperCase()
+                );
+
+                // LOAD UPLOADED PROFILE AVATAR
+
+                const avatarImage =
+                    this.playerAvatarElement.node.querySelector('img');
+
+                if (avatarImage) {
+
+                        avatarImage.addEventListener('load', () => {
+
+                        if (!this.sys.isActive()) {
+                            return;
+                        }
+
+                        this.playerAvatarFallback.setVisible(false);
+                        this.playerAvatarInitial.setVisible(false);
+                        this.playerAvatarElement.setVisible(true);
+
+                    }, { once: true });
+
+                    avatarImage.addEventListener('error', () => {
+
+                        if (!this.sys.isActive()) {
+                            return;
+                        }
+
+                        // Keep the default initial avatar visible.
+                        this.playerAvatarElement.setVisible(false);
+
+                    }, { once: true });
+
+                    avatarImage.src =
+                        `/api/profile/avatar?v=${Date.now()}`;
+                }
+
+                // GET OVERALL POINTS
+
+                const totalPoints = Number(profile.overallScore);
+
+                if (
+                    !Number.isFinite(totalPoints) ||
+                    totalPoints < 0
+                ) {
+                    throw new Error('Invalid total score received.');
+                }
+
+                this.totalPointsText.setText(
+                    totalPoints.toLocaleString('en-US')
+                );
+
+                console.log('Player profile loaded:', {
+                    displayName,
+                    totalPoints
+                });
+
+            } catch (error) {
+
+                console.error(
+                    'Unable to load player profile:',
+                    error
+                );
+
+                if (
+                    this.sys.isActive() &&
+                    this.totalPointsText?.active
+                ) {
+                    this.totalPointsText.setText('--');
+                }
             }
-        )
-        .setOrigin(0.5)
-        .setDepth(11);
-    }
+        }
+
 
     // MUSIC AND SOUND CONTROLS
 
