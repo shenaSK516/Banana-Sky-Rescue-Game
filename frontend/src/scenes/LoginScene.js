@@ -336,12 +336,9 @@ export default class LoginScene extends Phaser.Scene {
                 // Clear the password after authentication.
                 password.value = '';
 
-                // Temporary success confirmation.
-                // We will connect authenticated navigation
-                // after testing the backend login.
-                error.textContent = 'Login successful!';
-
                 console.log('Player login successful.');
+
+                this.scene.start('AuthenticatedMainMenuScene');
 
             } catch (loginError) {
 

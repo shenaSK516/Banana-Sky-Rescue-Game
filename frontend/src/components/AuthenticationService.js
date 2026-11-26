@@ -8,9 +8,7 @@ class AuthenticationService {
         this.csrfHeaderName = null;
     }
 
-    // =========================================
-    // 1. GET CSRF TOKEN FROM SPRING BOOT
-    // =========================================
+    //GET CSRF TOKEN FROM SPRING BOOT
 
     async getCsrfToken() {
 
@@ -58,9 +56,7 @@ class AuthenticationService {
         return data;
     }
 
-    // =========================================
     // 2. REUSABLE JSON POST REQUEST
-    // =========================================
 
     async postJson(endpoint, body) {
 
@@ -109,9 +105,7 @@ class AuthenticationService {
         return data;
     }
 
-    // =========================================
-    // 3. REGISTER NEW PLAYER
-    // =========================================
+    //REGISTER NEW PLAYER
 
     async register(username, email, password) {
 
@@ -125,9 +119,7 @@ class AuthenticationService {
         );
     }
 
-    // =========================================
-    // 4. VERIFY EMAIL WITH OTP
-    // =========================================
+    //VERIFY EMAIL WITH OTP
 
     async verifyEmail(email, otp) {
 
@@ -140,9 +132,7 @@ class AuthenticationService {
         );
     }
 
-    // =========================================
-    // 5. RESEND EMAIL VERIFICATION OTP
-    // =========================================
+    // RESEND EMAIL VERIFICATION OTP
 
     async resendOtp(email) {
 
@@ -155,9 +145,7 @@ class AuthenticationService {
     }
 
 
-    // =========================================
-    // 6. LOGIN PLAYER
-    // =========================================
+    // LOGIN PLAYER
 
     async login(username, password) {
 
@@ -266,7 +254,27 @@ class AuthenticationService {
 
         return data;
     }
+    async logout() {
+        const { token, headerName } = await this.getCsrfToken();
 
+        const response = await fetch(`${API_BASE_URL}/logout`, {
+            method: 'POST',
+            credentials: 'same-origin',
+            headers: {
+                [headerName]: token,
+                'Accept': 'application/json'
+            }
+        });
+
+        if (!response.ok) {
+            throw new Error('Unable to log out. Please try again.');
+        }
+
+        this.csrfToken = null;
+        this.csrfHeaderName = null;
+
+        return response.json();
+    }
 
 
 }

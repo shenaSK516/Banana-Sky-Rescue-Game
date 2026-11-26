@@ -11,6 +11,8 @@ import org.springframework.security.web.SecurityFilterChain;
 import com.bananaskyrescue.backend.security.LoginFailureHandler;
 import com.bananaskyrescue.backend.security.LoginSuccessHandler;
 
+import jakarta.servlet.http.HttpServletResponse;
+
 @Configuration
 public class SecurityConfig {
 
@@ -64,6 +66,14 @@ public class SecurityConfig {
                 .invalidateHttpSession(true)
                 .clearAuthentication(true)
                 .deleteCookies("JSESSIONID")
+                .logoutSuccessHandler((request, response, authentication) -> {
+                    response.setStatus(HttpServletResponse.SC_OK);
+                    response.setContentType("application/json");
+                    response.setCharacterEncoding("UTF-8");
+                    response.getWriter().write(
+                        "{\"message\":\"Logout successful\"}"
+                    );
+                })
             );
 
         return http.build();
