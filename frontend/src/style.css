@@ -26,23 +26,7 @@ body {
     overflow: hidden;
     isolation: isolate;
 }
-/*
 
-#game-container::before {
-    content: "";
-    position: absolute;
-    inset: -20px;
-    background-image:url('/assets/backgrounds/opening_background.png');
-    background-position: center center;
-    background-size: 100% 100%;
-    background-repeat: no-repeat;
-    filter: blur(15px);
-    transform: scale(1.05);
-    z-index: -3;
-}
-*/
-
-/* Phaser game canvas */
 #game-container canvas {
     display: block;
  
