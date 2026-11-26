@@ -1,0 +1,133 @@
+
+.banana-otp-form {
+    width: 500px;
+    font-family: Arial, sans-serif;
+    color: #123d80;
+    text-align: center;
+}
+
+.banana-otp-form form {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+/* Masked email address */
+
+.otp-email {
+    display: inline-block;
+    background: rgba(183, 228, 255, 0.85);
+    border: 2px solid #9cdbff;
+    border-radius: 30px;
+    padding: 9px 20px;
+    margin-top: 20px;
+    font-size: 16px;
+    font-weight: bold;
+    color: #153f86;
+    position: relative;
+    top: 38px;
+    text-align: center;
+    z-index: 2;
+}
+
+/* Six verification boxes */
+
+.otp-inputs {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    width: 100%;
+}
+
+.otp-digit {
+    box-sizing: border-box;
+    width: 58px;
+    height: 60px;
+    border: 3px solid #08b9f5;
+    border-radius: 16px;
+    background: rgba(255, 255, 255, 0.94);
+    color: #123d80;
+    font-size: 28px;
+    font-weight: bold;
+    text-align: center;
+    outline: none;
+    box-shadow: 0 4px 8px rgba(0, 90, 190, 0.12);
+    margin-top: 50px;
+}
+
+.otp-digit:focus {
+    border-color: #087de5;
+    box-shadow: 0 0 12px rgba(0, 145, 255, 0.35);
+}
+
+/* Validation messages */
+
+.otp-error {
+    height: 25px;
+    margin-top: 7px;
+    font-size: 13px;
+    font-weight: bold;
+    color: #e52335;
+    line-height: 20px;
+}
+
+/* Your existing Verify Email image */
+
+.otp-verify-button {
+    width: 500px;
+    height: 90px;
+    border: none;
+    background: url('/assets/authentication/verify-email-button.png')
+        center / contain no-repeat;
+    cursor: pointer;
+    transition: transform 0.15s ease;
+    margin-top: -20px;
+}
+
+.otp-verify-button:hover {
+    transform: scale(1.04);
+}
+
+.otp-verify-button:active {
+    transform: scale(0.96);
+}
+
+/* Resend and change-email controls */
+
+.otp-resend {
+    margin-top: 5px;
+    border: none;
+    background: transparent;
+    color: #064ac8;
+    font-size: 18px;
+    font-weight: bold;
+    cursor: pointer;
+    margin-top: -15px;
+}
+
+.otp-resend:disabled {
+    opacity: 0.75;
+    cursor: default;
+}
+
+.otp-change-email {
+    margin-top: 12px;
+    border: none;
+    background: transparent;
+    color: #064ac8;
+    font-size: 17px;
+    font-weight: bold;
+    text-decoration: underline;
+    cursor: pointer;
+}
+
+.otp-change-email:hover {
+    color: #0085ee;
+}
+
+.otp-verify-button:focus-visible,
+.otp-resend:focus-visible,
+.otp-change-email:focus-visible {
+    outline: 3px solid #ffcf38;
+    outline-offset: 3px;
+}
