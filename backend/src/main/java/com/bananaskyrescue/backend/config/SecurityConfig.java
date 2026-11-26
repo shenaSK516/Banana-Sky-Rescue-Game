@@ -1,16 +1,17 @@
-
 package com.bananaskyrescue.backend.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
+import org.springframework.security.web.context.SecurityContextRepository;
 
-import com.bananaskyrescue.backend.security.LoginFailureHandler;
-import com.bananaskyrescue.backend.security.LoginSuccessHandler;
 
 import jakarta.servlet.http.HttpServletResponse;
 
@@ -18,10 +19,20 @@ import jakarta.servlet.http.HttpServletResponse;
 public class SecurityConfig {
 
     @Bean
+    public AuthenticationManager authenticationManager(
+        AuthenticationConfiguration configuration) throws Exception {
+        return configuration.getAuthenticationManager();
+    }
+
+    @Bean
+    public SecurityContextRepository securityContextRepository() {
+        return new HttpSessionSecurityContextRepository();
+    }
+
+    @Bean
     public SecurityFilterChain securityFilterChain(
             HttpSecurity http,
-            LoginSuccessHandler loginSuccessHandler,
-            LoginFailureHandler loginFailureHandler
+            SecurityContextRepository securityContextRepository
     ) throws Exception {
 
         http
@@ -35,6 +46,11 @@ public class SecurityConfig {
                 .maximumSessions(1)
             )
 
+            .securityContext(context -> context
+            .securityContextRepository(securityContextRepository)
+            .requireExplicitSave(true)
+)
+
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/error").permitAll()
 
@@ -45,9 +61,14 @@ public class SecurityConfig {
 
                 .requestMatchers(
                     HttpMethod.POST,
-                    "/api/auth/register",
+        "/api/auth/register",
                     "/api/auth/verify-email",
-                    "/api/auth/resend-otp"
+                    "/api/auth/resend-otp",
+                    "/api/auth/login",
+                    "/api/auth/mfa/enrollment/start",
+                    "/api/auth/mfa/enrollment/confirm",
+                    "/api/auth/mfa/verify"
+
                 ).permitAll()
 
                 .anyRequest().authenticated()
@@ -61,14 +82,6 @@ public class SecurityConfig {
                     "{\"message\":\"Authentication required\"}"
                     );
                 })
-            )
-            .formLogin(form -> form
-                .loginProcessingUrl("/api/auth/login")
-                .usernameParameter("username")
-                .passwordParameter("password")
-                .successHandler(loginSuccessHandler)
-                .failureHandler(loginFailureHandler)
-                .permitAll()
             )
 
             .logout(logout -> logout

@@ -1,4 +1,3 @@
-
 package com.bananaskyrescue.backend.repository;
 
 import java.util.Optional;
@@ -12,8 +11,7 @@ import com.bananaskyrescue.backend.entity.Player;
 
 import jakarta.persistence.LockModeType;
 
-public interface PlayerRepository
-        extends JpaRepository<Player, Long> {
+public interface PlayerRepository extends JpaRepository<Player, Long> {
 
     boolean existsByUsername(String username);
 
@@ -23,7 +21,6 @@ public interface PlayerRepository
 
     Optional<Player> findByEmail(String email);
 
-    // Retrieve and lock a player during OTP operations.
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("""
         SELECT p
@@ -33,4 +30,24 @@ public interface PlayerRepository
     Optional<Player> findByEmailForUpdate(
             @Param("email") String email
     );
-}
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("""
+        SELECT p
+        FROM Player p
+        WHERE p.username = :username
+        """)
+
+        Optional<Player> findByUsernameForUpdate(
+            @Param("username") String username
+        );
+        @Lock(LockModeType.PESSIMISTIC_WRITE)
+        @Query("""
+            SELECT p
+            FROM Player p
+            WHERE p.id = :playerId
+            """)
+        Optional<Player> findByIdForUpdate(
+            @Param("playerId") Long playerId
+        );
+    }

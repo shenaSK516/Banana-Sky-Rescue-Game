@@ -262,108 +262,106 @@ export default class LoginScene extends Phaser.Scene {
         username.addEventListener('input', onTyping);
         password.addEventListener('input', onTyping);
 
+        // REAL LOGIN AUTHENTICATION WITH MFA
 
-        // REAL LOGIN AUTHENTICATION
+    form.addEventListener('submit', async (event) => {
 
-        form.addEventListener('submit', async (event) => {
+        event.preventDefault();
 
-            event.preventDefault();
+        if (this.loginInProgress || this.shuttingDown) {
+             return;
+        }
 
-            if (this.loginInProgress || this.shuttingDown) {
-                return;
-            }
+        this.playClick();
 
-            this.playClick();
+        const userValue = username.value.trim();
+        const passwordValue = password.value;
 
-            const userValue = username.value.trim();
-            const passwordValue = password.value;
+        error.textContent = '';
 
-            error.textContent = '';
+        if (!userValue) {
+            error.textContent = 'Please enter your username.';
+            username.focus();
+            return;
+        }
 
-            if (!userValue) {
-                error.textContent = 'Please enter your username.';
-                username.focus();
-                return;
-            }
+        if (!passwordValue) {
+            error.textContent = 'Please enter your password.';
+            password.focus();
+            return;
+        }
 
-            if (!passwordValue) {
-                error.textContent = 'Please enter your password.';
-                password.focus();
-                return;
-            }
+        this.loginInProgress = true;
 
-            this.loginInProgress = true;
+        submitButton.disabled = true;
+        username.disabled = true;
+        password.disabled = true;
 
-            submitButton.disabled = true;
-            username.disabled = true;
-            password.disabled = true;
+        submitButton.setAttribute('aria-busy', 'true');
 
-            submitButton.setAttribute('aria-busy', 'true');
+        try {
 
-            try {
-
+            // Step 1: Validate username and password.
+            const loginResult =
                 await authenticationService.login(
                     userValue,
                     passwordValue
                 );
 
-
-                // Verify that Spring Security recognizes
-                // the authenticated session.
-
-                const currentPlayer =
-                    await authenticationService.getCurrentPlayer();
-
-                if (this.shuttingDown || !this.sys.isActive()) {
-                    return;
-                }
-
-                // Keep only non-sensitive player information.
-                this.registry.set(
-                    'authenticatedPlayer',
-                    currentPlayer.username
-                );
-
-                console.log(
-                    'Authenticated player session verified.'
-                );
-
-
-                if (this.shuttingDown || !this.sys.isActive()) {
-                    return;
-                }
-
-                // Clear the password after authentication.
-                password.value = '';
-
-                console.log('Player login successful.');
-
-                this.scene.start('AuthenticatedMainMenuScene');
-
-            } catch (loginError) {
-
-                if (this.shuttingDown || !this.sys.isActive()) {
-                    return;
-                }
-
-                error.textContent =
-                    loginError.message ||
-                    'Unable to log in. Please try again.';
-
-            } finally {
-
-                if (!this.shuttingDown && this.sys.isActive()) {
-
-                    this.loginInProgress = false;
-
-                    submitButton.disabled = false;
-                    username.disabled = false;
-                    password.disabled = false;
-
-                    submitButton.setAttribute('aria-busy', 'false');
-                }
+            if (this.shuttingDown || !this.sys.isActive()) {
+                return;
             }
-        });
+
+            // Clear password after password verification.
+            password.value = '';
+            this.registry.set('pendingMfaUsername', userValue);
+
+            // Step 2: Determine the required MFA process.
+            if (loginResult.status === 'MFA_SETUP_REQUIRED') {
+
+                console.log('First-time MFA enrollment required.');
+
+                this.scene.start('MfaSetupScene');
+                return;
+            }
+
+            if (loginResult.status === 'MFA_REQUIRED') {
+
+                console.log('Authenticator verification required.');
+
+                this.scene.start('MfaVerificationScene');
+                return;
+            }
+
+            throw new Error(
+                'Unexpected authentication response from the server.'
+            );
+
+        } catch (loginError) {
+
+            if (this.shuttingDown || !this.sys.isActive()) {
+                return;
+            }
+
+            error.textContent =
+                loginError.message ||
+                'Unable to log in. Please try again.';
+
+        } finally {
+
+            if (!this.shuttingDown && this.sys.isActive()) {
+
+                this.loginInProgress = false;
+
+                submitButton.disabled = false;
+                username.disabled = false;
+                password.disabled = false;
+
+                submitButton.setAttribute('aria-busy', 'false');
+         }
+     }
+    });
+
 
 
         //REGISTRATION LINK

@@ -190,6 +190,34 @@ export default class ProfileScene extends Phaser.Scene {
             '#ffdf4a'
         );
 
+        // ACCOUNT SECURITY BUTTON
+
+        const securityButton = this.add.rectangle(
+            width * 0.77,
+            height * 0.235,
+            width * 0.17,
+            height * 0.045,
+            0x168be7
+        );
+
+        securityButton.setStrokeStyle(2, 0xffdf4a);
+        securityButton.setInteractive({ useHandCursor: true });
+
+        this.profileContent.add(securityButton);
+
+        addText(
+            width * 0.77,
+            height * 0.235,
+            'ACCOUNT SECURITY',
+            0.017,
+            '#ffffff'
+        ).setOrigin(0.5);
+
+        securityButton.on('pointerdown', () => {
+            AudioManager.playButtonClick(this);
+            this.scene.start('MfaReconnectScene');
+        });
+
         const usernameText = addText(
             width * 0.18,
             height * 0.280,

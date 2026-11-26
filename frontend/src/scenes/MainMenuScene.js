@@ -64,7 +64,7 @@ export default class MainMenuScene extends Phaser.Scene {
             'menuHowToPlay',
             buttonWidth,
             () => this.handleHowToPlay()
-            
+
         );
 
         // Back button
@@ -159,11 +159,12 @@ export default class MainMenuScene extends Phaser.Scene {
         console.log('Register selected');
         this.scene.start('RegisterScene');
 
-        
+
     }
 
     handleHowToPlay() {
         console.log('How to Play selected');
+        this.scene.start('HowToPlayScene');
     }
 
     handleSettings() {

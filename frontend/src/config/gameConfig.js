@@ -14,6 +14,11 @@ import SublevelSelectionScene from '../scenes/SublevelSelectionScene.js';
 import GameplayScene from '../scenes/GameplayScene.js';
 import ProfileScene from '../scenes/ProfileScene.js';
 import LeaderboardScene from '../scenes/LeaderboardScene.js';
+import MfaSetupScene from '../scenes/MfaSetupScene.js';
+import MfaVerificationScene from '../scenes/MfaVerificationScene.js';
+import MfaReconnectScene from '../scenes/MfaReconnectScene.js';
+import HowToPlayScene from '../scenes/HowToPlayScene.js';
+
 
 const gameConfig = {
     type: Phaser.AUTO,
@@ -38,6 +43,8 @@ const gameConfig = {
         OpeningScene,
         MainMenuScene,
         LoginScene,
+        MfaSetupScene,
+        MfaVerificationScene,
         RegisterScene,
         EmailRecoveryScene,
         OTPVerificationScene,
@@ -47,8 +54,9 @@ const gameConfig = {
         SublevelSelectionScene,
         GameplayScene,
         ProfileScene,
-        LeaderboardScene
-
+        LeaderboardScene,
+        HowToPlayScene,
+        MfaReconnectScene,
     ]
 };
 
