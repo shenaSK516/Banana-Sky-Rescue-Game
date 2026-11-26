@@ -2,6 +2,7 @@
 import Phaser from 'phaser';
 import AudioManager from '../components/AudioManager.js';
 import BackButton from '../components/BackButton.js';
+import authenticationService from '../components/AuthenticationService.js';
 import './login.css';
 
 export default class LoginScene extends Phaser.Scene {
@@ -12,7 +13,7 @@ export default class LoginScene extends Phaser.Scene {
     create() {
         const { width, height } = this.scale;
 
-        // 1. SKY BACKGROUND
+        //BACKGROUND IMAGE
         const sky = this.add.image(
             width / 2,
             height / 2,
@@ -25,7 +26,7 @@ export default class LoginScene extends Phaser.Scene {
         ));
         sky.setDepth(0);
 
-        // 2. TRANSPARENT LOGIN CARD
+        // TRANSPARENT LOGIN CARD
         // Keep its original aspect ratio.
         const card = this.add.image(
             width / 2,
@@ -105,7 +106,7 @@ export default class LoginScene extends Phaser.Scene {
                     <input
                         id="login-username"
                         type="text"
-                        placeholder="✉  Username or email"
+                        placeholder="👤  Username"
                         autocomplete="username"
                         maxlength="254"
                         required
@@ -173,7 +174,13 @@ export default class LoginScene extends Phaser.Scene {
                     <p class="register-link">
                         Don't have an account?
                         <a href="#" id="create-account">
-                            Create an Account
+                        Create an Account
+                        </a>
+                    </p>
+
+                    <p class="verification-recovery-link">
+                        <a href="#" id="resume-verification">
+                        Haven't verified your email? Resume Verification
                         </a>
                     </p>
                 </form>
@@ -198,8 +205,12 @@ export default class LoginScene extends Phaser.Scene {
         const username = root.querySelector('#login-username');
         const password = root.querySelector('#login-password');
         const error = root.querySelector('#login-error');
+        const submitButton = root.querySelector('#login-submit');
 
-        // 7. SHOW / HIDE PASSWORD
+        this.shuttingDown = false;
+        this.loginInProgress = false;
+
+        //SHOW / HIDE PASSWORD
         const togglePassword =
             root.querySelector('#toggle-password');
 
@@ -230,7 +241,7 @@ export default class LoginScene extends Phaser.Scene {
             this.playClick();
         });
 
-        // 8. BANANA TYPING ANIMATION
+        //BANANA TYPING ANIMATION
         let typingTimer = null;
 
         const onTyping = () => {
@@ -251,9 +262,17 @@ export default class LoginScene extends Phaser.Scene {
         username.addEventListener('input', onTyping);
         password.addEventListener('input', onTyping);
 
-        // 9. FORM VALIDATION
-        form.addEventListener('submit', (event) => {
+
+        // REAL LOGIN AUTHENTICATION
+
+        form.addEventListener('submit', async (event) => {
+
             event.preventDefault();
+
+            if (this.loginInProgress || this.shuttingDown) {
+                return;
+            }
+
             this.playClick();
 
             const userValue = username.value.trim();
@@ -262,25 +281,95 @@ export default class LoginScene extends Phaser.Scene {
             error.textContent = '';
 
             if (!userValue) {
-                error.textContent =
-                    'Please enter your username or email.';
+                error.textContent = 'Please enter your username.';
                 username.focus();
                 return;
             }
 
             if (!passwordValue) {
-                error.textContent =
-                    'Please enter your password.';
+                error.textContent = 'Please enter your password.';
                 password.focus();
                 return;
             }
 
-            // Real authentication will be connected later.
-            error.textContent =
-                'Login service is not connected yet.';
+            this.loginInProgress = true;
+
+            submitButton.disabled = true;
+            username.disabled = true;
+            password.disabled = true;
+
+            submitButton.setAttribute('aria-busy', 'true');
+
+            try {
+
+                await authenticationService.login(
+                    userValue,
+                    passwordValue
+                );
+
+
+                // Verify that Spring Security recognizes
+                // the authenticated session.
+
+                const currentPlayer =
+                    await authenticationService.getCurrentPlayer();
+
+                if (this.shuttingDown || !this.sys.isActive()) {
+                    return;
+                }
+
+                // Keep only non-sensitive player information.
+                this.registry.set(
+                    'authenticatedPlayer',
+                    currentPlayer.username
+                );
+
+                console.log(
+                    'Authenticated player session verified.'
+                );
+
+
+                if (this.shuttingDown || !this.sys.isActive()) {
+                    return;
+                }
+
+                // Clear the password after authentication.
+                password.value = '';
+
+                // Temporary success confirmation.
+                // We will connect authenticated navigation
+                // after testing the backend login.
+                error.textContent = 'Login successful!';
+
+                console.log('Player login successful.');
+
+            } catch (loginError) {
+
+                if (this.shuttingDown || !this.sys.isActive()) {
+                    return;
+                }
+
+                error.textContent =
+                    loginError.message ||
+                    'Unable to log in. Please try again.';
+
+            } finally {
+
+                if (!this.shuttingDown && this.sys.isActive()) {
+
+                    this.loginInProgress = false;
+
+                    submitButton.disabled = false;
+                    username.disabled = false;
+                    password.disabled = false;
+
+                    submitButton.setAttribute('aria-busy', 'false');
+                }
+            }
         });
 
-        // 10. REGISTRATION LINK
+
+        //REGISTRATION LINK
         root.querySelector('#create-account')
             .addEventListener('click', (event) => {
                 event.preventDefault();
@@ -294,7 +383,24 @@ export default class LoginScene extends Phaser.Scene {
                 }
             });
 
-        // 11. FORGOT PASSWORD
+
+        //RESUME EMAIL VERIFICATION
+        root.querySelector('#resume-verification')
+            .addEventListener('click', (event) => {
+                event.preventDefault();
+
+                this.playClick();
+
+                if (this.scene.manager.keys.EmailRecoveryScene) {
+                    this.scene.start('EmailRecoveryScene');
+                } else {
+                    error.textContent =
+                        'Email verification recovery is unavailable.';
+                }
+            });
+
+
+        //FORGOT PASSWORD
         root.querySelector('#forgot-password')
             .addEventListener('click', (event) => {
                 event.preventDefault();
@@ -308,8 +414,12 @@ export default class LoginScene extends Phaser.Scene {
         this.events.once(
             Phaser.Scenes.Events.SHUTDOWN,
             () => {
+
+                this.shuttingDown = true;
+
                 if (typingTimer !== null) {
-                    clearTimeout(typingTimer);
+                clearTimeout(typingTimer);
+                typingTimer = null;
                 }
             }
         );
